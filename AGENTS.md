@@ -12,8 +12,8 @@ RedwoodJS (Cedar) app.
   primitives, and work in isolation when its direct peer requirements are present.
 - Prefer package boundaries that let users adopt one block at a time. For example, `@rwgql/cell` should work with
   Apollo Client, `@rwgql/rwsdk-apollo-client` should require only RedwoodSDK plus Apollo GraphQL pieces,
-  `@rwgql/pgserve-dev` should work anywhere Vite Task is available, and `@rwgql/prisma-dev` should require Vite Task
-  plus Prisma.
+  `@cedarjs/pg` should work anywhere Vite Task / Vitest is available, and `@rwgql/prisma-dev` should require Vite Task
+  plus Prisma (and optionally `@cedarjs/pg` for local Postgres).
 - Use [migrating-from-redwoodjs.md](migrating-from-redwoodjs.md) and GitHub parity issues for Cedar → RedwoodGQL
   migration guidance; do not recreate a full classic Redwood app in-tree unless the task is explicitly about parity.
 
@@ -24,6 +24,10 @@ RedwoodJS (Cedar) app.
 This project is using Vite+, a unified toolchain built on top of Vite, Rolldown, Vitest, tsdown, Oxlint, Oxfmt, and Vite Task. Vite+ wraps runtime management, package management, and frontend tooling in a single global CLI called `vp`. Vite+ is distinct from Vite, and it invokes Vite through `vp dev` and `vp build`. Run `vp help` to print a list of commands and `vp <command> --help` for information about a specific command.
 
 Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.dev/guide/.
+
+## Built-in Commands vs Scripts
+
+`vp <name>` runs a built-in command. `vp run <name>` runs a `package.json` script or a `vite.config.ts` task. Scripts cannot overwrite built-ins, so `vp dev` and `vp run dev` may do different things. Check `package.json` and `vite.config.ts` first, and run `vp run <name>` when the project defines a script or task with that name.
 
 ## Review Checklist
 
@@ -42,10 +46,11 @@ non-login shells). The startup update script runs `vp install`. Standard command
 
 ### Running the stack
 
-`vp run dev` builds packages, starts pgserve, migrates + seeds, then runs the web app and the GraphQL/auth server in
-parallel (see `README.md` for the exact ports and URLs). Run it under tmux since it is long-lived. pgserve needs no
-`XDG_RUNTIME_DIR` setup — its socket lands in `/tmp/pgserve` when the var is unset. The GraphQL `posts` query is
-public; `contacts`/`users` are behind the `requireAuth` directive, so query them only with a logged-in session.
+`vp run dev` builds packages, ensures a worktree-scoped Postgres via `@cedarjs/pg` (autopg host), migrates + seeds,
+then runs the web app and the GraphQL/auth server in parallel (see `README.md` for the exact ports and URLs). Run it
+under tmux since it is long-lived. Install `@cedarjs/pg` from the npm `alpha` dist-tag
+(`0.1.0-alpha.0`). The GraphQL `posts` query is public; `contacts`/`users` are behind the `requireAuth` directive, so
+query them only with a logged-in session.
 
 ### Tests
 

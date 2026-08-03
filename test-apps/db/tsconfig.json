@@ -15,5 +15,5 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true
   },
-  "include": ["index.ts", "pgserve.config.ts", "vite.config.ts"]
+  "include": ["index.ts", "vite.config.ts"]
 }

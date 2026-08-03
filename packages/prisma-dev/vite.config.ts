@@ -5,7 +5,8 @@ export default defineConfig({
     dts: {
       tsgo: true,
     },
-    entry: ["src/index.ts", "src/tasks.ts"],
+    // Runtime is TypeScript via package exports + tsx; pack keeps typed artifacts for consumers that need them.
+    entry: ["src/index.ts", "src/tasks.ts", "src/prepareDev.ts", "src/testDatabase.ts"],
   },
   test: {
     include: ["src/**/*.test.ts"],

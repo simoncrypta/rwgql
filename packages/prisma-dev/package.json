@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "files": [
-    "dist"
+    "src"
   ],
   "type": "module",
   "exports": {
@@ -29,10 +29,11 @@
     "prepublishOnly": "vp run build"
   },
   "dependencies": {
-    "@rwgql/pgserve-dev": "workspace:*"
+    "@cedarjs/pg": "0.1.0-alpha.0"
   },
   "devDependencies": {
     "@types/node": "^25.6.2",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vite-plus": "catalog:"
   }

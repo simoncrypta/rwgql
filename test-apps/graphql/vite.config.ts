@@ -75,8 +75,8 @@ export default defineConfig({
         output: ["schema.graphql"],
       },
       "regenerate-registry": {
-        command:
-          "tsx scripts/regenerate-registry.ts && vp fmt src/typeDefs.gen.ts src/services.gen.ts src/getSchema.gen.ts",
+        // Gen files are in fmt.ignorePatterns; `vp fmt` on them fails even when named.
+        command: "tsx scripts/regenerate-registry.ts",
         dependsOn: [...graphqlPackageBuilds],
         input: [
           "scripts/regenerate-registry.ts",

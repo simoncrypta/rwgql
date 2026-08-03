@@ -96,21 +96,22 @@ standalone `db` workspace package that both the GraphQL server and scripts impor
    export type * from "@prisma/client";
    ```
 
-3. Wire local Postgres and Prisma tasks with `@rwgql/pgserve-dev` and `@rwgql/prisma-dev` (see
-   [`test-apps/db/vite.config.ts`](test-apps/db/vite.config.ts) and [`test-apps/db/pgserve.config.ts`](test-apps/db/pgserve.config.ts)):
+3. Wire local Postgres and Prisma tasks with `@cedarjs/pg` and `@rwgql/prisma-dev` (see
+   [`test-apps/db/vite.config.ts`](test-apps/db/vite.config.ts)):
 
    ```ts
-   // test-apps/db/pgserve.config.ts
-   import { defineDbDevConfig } from "@rwgql/pgserve-dev";
-   import { createPrismaEnvAdapter } from "@rwgql/prisma-dev";
+   // test-apps/db/vite.config.ts
+   import { createPrismaTasks } from "@rwgql/prisma-dev/tasks";
 
-   export const pgserveDevConfig = defineDbDevConfig(import.meta.url, {
-     appEnvAdapter: createPrismaEnvAdapter(),
+   export default defineConfig({
+     run: {
+       tasks: createPrismaTasks(),
+     },
    });
    ```
 
    This replaces `yarn rw prisma ...` commands with tasks like `vp run db#generate`, `vp run db#migrate-deploy`,
-   and `vp run db#dev:prepare` (start Postgres via pgserve and sync `DATABASE_URL`).
+   and `vp run db#prepare` (ensure Postgres via `@cedarjs/pg` and sync `DATABASE_URL`).
 
 4. Move `scripts/seed.ts` (previously run with `yarn rw exec seed`) to a plain script executed with `tsx` — in this
    repo it lives at [`test-apps/scripts/seed.ts`](test-apps/scripts/seed.ts) and runs as the root `seed` task. Any other
@@ -216,18 +217,10 @@ dbAuth survives the migration almost configuration-for-configuration via `@rwgql
    export const dbAuthOptions: DbAuthHandlerOptions = {
      authModelAccessor: "user",
      authFields: { id: "id", username: "email", hashedPassword: "hashedPassword" /* ... */ },
-     login: {
-       /* same handlers, errors, expires as before */
-     },
-     signup: {
-       /* ... */
-     },
-     forgotPassword: {
-       /* ... */
-     },
-     resetPassword: {
-       /* ... */
-     },
+     login: {/* same handlers, errors, expires as before */},
+     signup: {/* ... */},
+     forgotPassword: {/* ... */},
+     resetPassword: {/* ... */},
      cookie: { name: cookieName, attributes: { HttpOnly: true, Path: "/", SameSite: "Lax" } },
      secret: process.env.DB_AUTH_SECRET,
    };
@@ -521,8 +514,8 @@ Jest and `@redwoodjs/testing` are replaced by Vitest through Vite+ (`vp test`), 
 ### API tests
 
 - Scenarios (`defineScenario`, `ScenarioData`, `*.scenarios.ts`) are replaced by plain fixture functions plus a real
-  ephemeral test database. `@rwgql/prisma-dev/test` starts a throwaway pgserve Postgres in Vitest's `globalSetup`,
-  runs migrations, and tears it down (see
+  ephemeral test database. `@rwgql/prisma-dev/test` starts a throwaway `@cedarjs/pg` (autopg) database in Vitest's
+  `globalSetup`, runs migrations, and tears it down (see
   [`test-apps/graphql/testUtils/globalSetup.ts`](test-apps/graphql/testUtils/globalSetup.ts)); each test resets tables and
   seeds what it needs (see [`test-apps/graphql/testUtils/db.ts`](test-apps/graphql/testUtils/db.ts)).
 - Services are called through `callService` from `@rwgql/graphql-typegen/yoga`, which mirrors Redwood's service call

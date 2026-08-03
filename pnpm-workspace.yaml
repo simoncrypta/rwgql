@@ -13,6 +13,7 @@ catalog:
   vitest: 4.1.9
   "@vitest/browser-playwright": 4.1.9
   vite-plus: latest
+  "@typescript/native-preview": 7.0.0-dev.20260707.2
 overrides:
   vite: "catalog:"
   vitest: "catalog:"
@@ -30,10 +31,11 @@ allowBuilds:
   "@prisma/client": true
   "@prisma/engines": true
   bun: true
+  "@cedarjs/pg": true
   esbuild: true
-  pgserve: true
   prisma: true
   sharp: true
   workerd: true
 minimumReleaseAgeExclude:
   - rwsdk@1.5.0
+  - "@cedarjs/pg@0.1.0-alpha.0"

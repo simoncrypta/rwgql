@@ -10,7 +10,7 @@ Browser → Cloudflare Worker (test-apps/web)
          Render Managed PostgreSQL
 ```
 
-Local development is unchanged: `vp run dev` uses pgserve and does not touch production infrastructure.
+Local development is unchanged: `vp run dev` uses `@cedarjs/pg`/autopg and does not touch production infrastructure.
 
 ## Prerequisites
 
@@ -71,9 +71,9 @@ the same value on Cloudflare.
 | Start | `pnpm exec vp run deploy:start`                            |
 
 - **`deploy:build`** — `bootstrap` + `graphql#build` (Nitro), then asserts key `packages/*/dist` and `.output` artifacts exist.
-- **`deploy:start`** — runs `seed` (which depends on `db#migrate-deploy` → `db#dev:prepare`), then starts Nitro.
+- **`deploy:start`** — runs `seed` (which depends on `db#migrate-deploy` → `db#prepare`), then starts Nitro.
 
-With `NODE_ENV=production`, `@rwgql/pgserve-dev` skips starting pgserve and does not write localhost `test-apps/db/.env`. Prisma tasks map `DATABASE_URL` → `PRISMA_DATABASE_URL` when needed.
+With `NODE_ENV=production`, `@rwgql/prisma-dev` skips `@cedarjs/pg` and does not write localhost `test-apps/db/.env`.
 
 `FORCE_DEMO_SEED=1` is set in the Blueprint so each start resets demo data. Remove that env var for a durable database.
 
@@ -154,9 +154,9 @@ Attach `app.example.com` to the Worker in the Cloudflare dashboard or via wrangl
 | `DB_AUTH_COOKIE_SAMESITE` | —              | env          | `Lax` (default) or `None` if truly cross-site |
 | `DATABASE_URL`            | —              | from DB link | Prisma + migrations                           |
 | `FORCE_DEMO_SEED`         | —              | `1` (PoC)    | Truncate + reseed on each API start           |
-| `NODE_ENV`                | —              | `production` | API (also disables local pgserve)             |
+| `NODE_ENV`                | —              | `production` | API (also disables local `@cedarjs/pg`)       |
 
-Local dev uses pgserve URLs in `test-apps/db/.env` (generated); do not point local dev at production unless intentional.
+Local dev uses `@cedarjs/pg` URLs in `test-apps/db/.env` (generated); do not point local dev at production unless intentional.
 
 ## Security notes
 
@@ -184,6 +184,6 @@ After both services are live:
 | SSR always logged out         | `DB_AUTH_COOKIE_DOMAIN`, `DB_AUTH_SECRET` match on both sides                                                  |
 | Prisma engine error on Render | `binaryTargets` includes `debian-openssl-3.0.x` in schema                                                      |
 | Build fails on Render         | Node ≥ 22, `vp run --no-cache deploy:build` logs, workspace `packages/*/dist` present                          |
-| Empty posts / wrong DB        | Confirm `NODE_ENV=production` so setup-env does not write localhost `.env`; seed targets `rwgql-db`            |
+| Empty posts / wrong DB        | Confirm `NODE_ENV=production` so prepare does not write localhost `.env`; seed targets `rwgql-db`              |
 | `getToken` 401 on `/auth`     | Normal when logged out; cross-origin cookies need `DB_AUTH_COOKIE_SAMESITE=None` + custom domains for SSR auth |
 | MCP unauthorized              | Personal Render API key in `~/.cursor/mcp.json`, restart Cursor                                                |

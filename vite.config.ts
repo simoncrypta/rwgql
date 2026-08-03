@@ -36,15 +36,14 @@ export default defineConfig({
         cache: false,
       },
       "deploy:start": {
-        // migrate + seed run via seed → db#migrate-deploy → db#dev:prepare (pgserve no-ops in production).
+        // migrate + seed run via seed → db#migrate-deploy → db#prepare (@cedarjs/pg no-ops in production).
         dependsOn: ["seed"],
-        command:
-          'PRISMA_DATABASE_URL="${PRISMA_DATABASE_URL:-$DATABASE_URL}" node test-apps/graphql/.output/server/index.mjs',
+        command: "node test-apps/graphql/.output/server/index.mjs",
         cache: false,
       },
       dev: {
-        command: "vp run --parallel --filter rwsdk --filter graphql --filter db dev",
-        dependsOn: ["bootstrap", "db#generate", "db#dev:prepare", "seed", "graphql#codegen"],
+        command: "vp run --parallel --filter rwsdk --filter graphql dev",
+        dependsOn: ["bootstrap", "db#generate", "db#prepare", "seed", "graphql#codegen"],
         cache: false,
       },
       seed: {

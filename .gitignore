@@ -29,10 +29,10 @@ dist-ssr
 
 .qmd/
 
-# Local PostgreSQL (pgserve)
-test-apps/db/.pgserve/
+# Local PostgreSQL (@cedarjs/pg / autopg)
+.cedarpg/
+.cedar-pg/
 test-apps/db/.env
-test-apps/db/connection.env
 test-apps/db/scripts/.env
 
 # GraphQL codegen

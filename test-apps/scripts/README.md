@@ -2,14 +2,13 @@
 
 Project-specific scripts live here. Shared dev tooling lives in packages:
 
-- [`@rwgql/pgserve-dev`](../../packages/pgserve-dev) — PostgreSQL/pgserve lifecycle, CLI utilities, and related Vite
-  tasks (ORM-agnostic)
-- [`@rwgql/prisma-dev`](../../packages/prisma-dev) — Prisma env loading and Vite tasks (`generate`, `migrate-deploy`)
+- [`@cedarjs/pg`](https://www.npmjs.com/package/@cedarjs/pg) — worktree-isolated local Postgres via autopg
+  (`0.1.0-alpha.0` / npm `alpha` dist-tag)
+- [`@rwgql/prisma-dev`](../../packages/prisma-dev) — Prisma env loading, `@cedarjs/pg` prepare, and Vite tasks
+  (`prepare`, `generate`, `migrate-deploy`)
 
-Pgserve configuration for this app is in [`db/pgserve.config.ts`](../db/pgserve.config.ts). CLI entrypoints
-load that module via an absolute `--config` path derived from the workspace root; pgserve defaults come from
-`defineDbDevConfig()` in `@rwgql/pgserve-dev`, with the Prisma env adapter from `createPrismaEnvAdapter()` in
-`@rwgql/prisma-dev`.
+Local Postgres for this app is provisioned by `vp run db#prepare`. Prisma tasks live in
+[`db/vite.config.ts`](../db/vite.config.ts).
 
 ## Local scripts
 
@@ -21,18 +20,16 @@ Root [`vite.config.ts`](../../vite.config.ts) orchestrates workspace flows:
 
 - `bootstrap` — packs workspace tooling packages via `dependsOn` (`vp run bootstrap`; also runs automatically before `dev`
   and `ready`)
-- `dev` — depends on `bootstrap`, `db#dev:prepare`, `seed`, and `graphql#codegen`; then runs
-  `rwsdk#dev`, `graphql#dev`, and `db#dev` in parallel via `vp run --parallel`. Each package handles its own
-  shutdown on Ctrl+C; `db#dev` holds the session and stops pgserve quietly when it ends
+- `dev` — depends on `bootstrap`, `db#prepare`, `seed`, and `graphql#codegen`; then runs
+  `rwsdk#dev` and `graphql#dev` in parallel via `vp run --parallel`. Each package handles its own shutdown on Ctrl+C
 - `seed` — runs `test-apps/scripts/seed.ts`; depends on `db#migrate-deploy`
 - `ready` — format, lint, type-check, tests, and build across the workspace (`vp run ready`)
 
-[`db/vite.config.ts`](../db/vite.config.ts) owns the db task graph via `createPgserveTasks()` and
-`createPrismaTasks()`:
+[`db/vite.config.ts`](../db/vite.config.ts) owns the db task graph via `createPrismaTasks()`:
 
-- `setup-env`, `pgserve`, `prepare`, `dev:prepare`, `dev`, `dev:stop`
+- `prepare`
 - `generate`, `migrate-deploy`
 
 Cross-package ordering uses Vite+ `package#task` notation in `dependsOn` (e.g. `db#migrate-deploy`).
 
-Generated files (gitignored): `db/.pgserve/connection.env`, `db/.env`.
+Generated files (gitignored): `db/.env` (Prisma contract) and repo-root `.cedarpg/` (`@cedarjs/pg` internal lease cache).

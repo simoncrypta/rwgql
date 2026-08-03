@@ -7,16 +7,38 @@ export interface EnsurePrismaDatabaseUrlOptions {
   envFiles?: string[];
 }
 
+function readEnvValue(envPath: string, key: string): string | undefined {
+  for (const line of readFileSync(envPath, "utf8").split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) {
+      continue;
+    }
+
+    const match = trimmed.match(new RegExp(`^${key}=(.*)$`));
+    if (!match) {
+      continue;
+    }
+
+    return match[1]!.replace(/^["']|["']$/g, "");
+  }
+
+  return undefined;
+}
+
+/**
+ * Ensure `DATABASE_URL` is available for Prisma.
+ * Prefer process env; optionally accept a legacy `PRISMA_DATABASE_URL` deploy shim;
+ * otherwise load `DATABASE_URL` from package `.env` / `.env.defaults`.
+ */
 export function ensurePrismaDatabaseUrl(
   moduleUrl: string,
   options: EnsurePrismaDatabaseUrlOptions = {},
 ): void {
-  if (process.env.PRISMA_DATABASE_URL) {
-    return;
+  if (!process.env.DATABASE_URL && process.env.PRISMA_DATABASE_URL) {
+    process.env.DATABASE_URL = process.env.PRISMA_DATABASE_URL;
   }
 
   if (process.env.DATABASE_URL) {
-    process.env.PRISMA_DATABASE_URL = process.env.DATABASE_URL;
     return;
   }
 
@@ -32,19 +54,12 @@ export function ensurePrismaDatabaseUrl(
       continue;
     }
 
-    for (const line of readFileSync(envPath, "utf8").split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) {
-        continue;
-      }
-
-      const match = trimmed.match(/^PRISMA_DATABASE_URL=(.*)$/);
-      if (!match) {
-        continue;
-      }
-
-      process.env.PRISMA_DATABASE_URL = match[1]!.replace(/^["']|["']$/g, "");
-      return;
+    const databaseUrl = readEnvValue(envPath, "DATABASE_URL");
+    if (!databaseUrl) {
+      continue;
     }
+
+    process.env.DATABASE_URL = databaseUrl;
+    return;
   }
 }
