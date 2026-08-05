@@ -195,7 +195,7 @@ may still change.
 
 ### Working today
 
-- **Dev workflow** — `vp run dev` ensures Postgres (`@cedarjs/pg`/autopg), migrates, seeds, and runs web +
+- **Dev workflow** — `vp run dev` acquires Postgres (`@cedarjs/pg`/autopg), migrates, seeds, and runs web +
   GraphQL in parallel
 - **Web app** — RedwoodSDK + Apollo Client; scaffold pages (Posts, Contacts) use Cells; cached public
   blog routes use server-side GraphQL via `createServerGraphql` (see `@rwgql/rwsdk-apollo-client`
@@ -205,7 +205,7 @@ may still change.
 - **Auth** — `@rwgql/dbauth` (login, signup, logout, forgot/reset password), session cookies,
   web route guards, and `requireAuth`/`skipAuth` on the schema
 - **Data layer** — Prisma schema, migrations, and seed data in `test-apps/db`
-- **Tooling packages** — `@cedarjs/pg` (alpha), `@rwgql/prisma-dev`,
+- **Tooling packages** — `@cedarjs/pg` (`0.2.0-alpha.0`), `@rwgql/prisma-dev`,
   `@rwgql/log-formatter`, `@rwgql/graphql-typegen`
 
 ### Parity vs classic RedwoodJS (Cedar)

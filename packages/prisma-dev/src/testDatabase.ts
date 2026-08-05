@@ -3,14 +3,21 @@ import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { setup as setupCedarPgTest } from "@cedarjs/pg/vitest";
+import {
+  cloneWorkerDatabase,
+  createGlobalSetup,
+  type SetupTemplateModeOptions,
+} from "@cedarjs/pg/vitest/template";
 
-export interface EphemeralTestDatabaseOptions {
+export { cloneWorkerDatabase };
+export type { SetupTemplateModeOptions };
+
+export interface TestDatabaseGlobalSetupOptions {
   /** Module URL of the db workspace package (for example test-apps/db/index.ts). */
   dbModuleUrl: string;
+  /** Optional worktree root passed through to `@cedarjs/pg`. */
+  root?: string;
 }
-
-let teardown: (() => Promise<void>) | null = null;
 
 function resolveDbPackageRoot(dbModuleUrl: string): string {
   return resolve(dirname(fileURLToPath(dbModuleUrl)));
@@ -45,33 +52,40 @@ function runMigrations(dbPackageRoot: string): void {
 }
 
 /**
- * Compose `@cedarjs/pg/vitest` setup, normalize Prisma env, and migrate.
- * Teardown is the adapter's skip-aware dispose (no-op when ensure was skipped).
+ * Vitest `globalSetup` factory: acquire → Prisma migrate once → mark TEMPLATE.
+ * Pair with `cloneWorkerDatabase()` in a setupFile so each worker gets a clone.
+ *
+ * Stock `@cedarjs/pg/vitest` is one shared test DB only; this uses
+ * `@cedarjs/pg/vitest/template` so migrate stays app-owned (Prisma) while cedar-pg
+ * owns TEMPLATE + per-worker clones + role-scoped dispose.
  */
-export async function startEphemeralTestDatabase(
-  options: EphemeralTestDatabaseOptions,
-): Promise<void> {
-  if (teardown) {
-    return;
-  }
-
+export function createTestDatabaseGlobalSetup(options: TestDatabaseGlobalSetupOptions) {
   const dbPackageRoot = resolveDbPackageRoot(options.dbModuleUrl);
-  teardown = await setupCedarPgTest();
+  let migratedByTemplate = false;
 
-  const databaseUrl = process.env.DATABASE_URL ?? process.env.TEST_DATABASE_URL;
-  if (!databaseUrl) {
-    throw new Error("CEDAR_PG is disabled; set TEST_DATABASE_URL or DATABASE_URL for tests");
-  }
+  const cedarSetup = createGlobalSetup({
+    root: options.root,
+    migrate: async ({ databaseUrl }) => {
+      applyDatabaseEnv(databaseUrl);
+      runMigrations(dbPackageRoot);
+      migratedByTemplate = true;
+    },
+  });
 
-  applyDatabaseEnv(databaseUrl);
-  runMigrations(dbPackageRoot);
-}
+  return async () => {
+    const teardown = await cedarSetup();
 
-export async function stopEphemeralTestDatabase(): Promise<void> {
-  if (!teardown) {
-    return;
-  }
+    // When acquire was skipped (external URL / CEDAR_PG=0), template migrate did not
+    // run — still migrate so Prisma apps keep a usable schema on the shared DB.
+    if (!migratedByTemplate) {
+      const databaseUrl = process.env.DATABASE_URL ?? process.env.TEST_DATABASE_URL;
+      if (!databaseUrl) {
+        throw new Error("CEDAR_PG is disabled; set TEST_DATABASE_URL or DATABASE_URL for tests");
+      }
+      applyDatabaseEnv(databaseUrl);
+      runMigrations(dbPackageRoot);
+    }
 
-  await teardown();
-  teardown = null;
+    return teardown;
+  };
 }

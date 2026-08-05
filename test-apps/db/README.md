@@ -10,7 +10,7 @@ import { db, type User } from "db";
 
 ## Day to day
 
-From the repo root, `vp run dev` handles the database for you: ensure a worktree-scoped Postgres (via
+From the repo root, `vp run dev` handles the database for you: acquire a worktree-scoped Postgres (via
 [`@cedarjs/pg`](https://www.npmjs.com/package/@cedarjs/pg) + [autopg](https://github.com/automagik-dev/autopg)), apply
 migrations, generate the Prisma client, and seed data.
 
@@ -30,11 +30,11 @@ You usually do not need to run anything in this directory manually.
 
 Run from the repo root with `vp run db#<task>`:
 
-| Task             | When to use                                                               |
-| ---------------- | ------------------------------------------------------------------------- |
-| `prepare`        | Ensure Postgres via `@cedarjs/pg` and refresh `.env` (used by root `dev`) |
-| `generate`       | Regenerate `@prisma/client` after schema changes                          |
-| `migrate-deploy` | Apply pending migrations (production-style; used by root `seed`)          |
+| Task             | When to use                                                                |
+| ---------------- | -------------------------------------------------------------------------- |
+| `prepare`        | Acquire Postgres via `@cedarjs/pg` and refresh `.env` (used by root `dev`) |
+| `generate`       | Regenerate `@prisma/client` after schema changes                           |
+| `migrate-deploy` | Apply pending migrations (production-style; used by root `seed`)           |
 
 Root tasks that depend on this package:
 
@@ -64,7 +64,7 @@ cd test-apps/db && vp exec prisma migrate dev --name describe_your_change
 `@cedarjs/pg` also keeps an internal lease file at the repo-root `.cedarpg/dev.env`. Do not point Prisma or app code
 at that file — treat it as `@cedarjs/pg` private state.
 
-GraphQL service tests use an ephemeral `@cedarjs/pg` test database via `@rwgql/prisma-dev/test`, so `vp test` does not
+GraphQL service tests use `@cedarjs/pg/vitest/template` (migrate once + per-worker clones) via `@rwgql/prisma-dev/test`, so `vp test` does not
 read or write the dev database seeded by `test-apps/scripts/seed.ts`.
 
 Override values by editing `.env` locally — it is gitignored.

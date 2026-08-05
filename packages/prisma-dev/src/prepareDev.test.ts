@@ -4,10 +4,10 @@ import { join } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
-const ensureIfNeeded = vi.hoisted(() => vi.fn());
+const acquireIfNeeded = vi.hoisted(() => vi.fn());
 
 vi.mock("@cedarjs/pg", () => ({
-  ensureIfNeeded,
+  acquireIfNeeded,
 }));
 
 import { prepareDevDatabase } from "./prepareDev.ts";
@@ -19,7 +19,7 @@ describe("prepareDevDatabase", () => {
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), "prisma-dev-prepare-"));
-    ensureIfNeeded.mockReset();
+    acquireIfNeeded.mockReset();
     delete process.env.NODE_ENV;
     delete process.env.DATABASE_URL;
   });
@@ -38,20 +38,20 @@ describe("prepareDevDatabase", () => {
     }
   });
 
-  it("skips ensure in production and does not write .env", async () => {
+  it("skips acquire in production and does not write .env", async () => {
     process.env.NODE_ENV = "production";
     process.env.DATABASE_URL = "postgresql://render/db";
     const appEnvPath = join(dir, ".env");
 
     await prepareDevDatabase({ appEnvPath });
 
-    expect(ensureIfNeeded).not.toHaveBeenCalled();
+    expect(acquireIfNeeded).not.toHaveBeenCalled();
     expect(() => readFileSync(appEnvPath, "utf8")).toThrow();
   });
 
   it("writes DATABASE_URL when @cedarjs/pg skip policy says disabled", async () => {
     process.env.DATABASE_URL = "postgresql://external/db";
-    ensureIfNeeded.mockResolvedValue({ status: "skipped", reason: "disabled" });
+    acquireIfNeeded.mockResolvedValue({ status: "skipped", reason: "disabled" });
     const appEnvPath = join(dir, ".env");
 
     await prepareDevDatabase({ appEnvPath });
@@ -63,7 +63,7 @@ describe("prepareDevDatabase", () => {
 
   it("writes DATABASE_URL when @cedarjs/pg skip policy says external-url", async () => {
     process.env.DATABASE_URL = "postgresql://external/db";
-    ensureIfNeeded.mockResolvedValue({
+    acquireIfNeeded.mockResolvedValue({
       status: "skipped",
       reason: "external-url",
       databaseUrl: "postgresql://external/db",
@@ -75,9 +75,9 @@ describe("prepareDevDatabase", () => {
     expect(readFileSync(appEnvPath, "utf8")).toContain("postgresql://external/db");
   });
 
-  it("ensures @cedarjs/pg and writes app env", async () => {
-    ensureIfNeeded.mockResolvedValue({
-      status: "ensured",
+  it("acquires @cedarjs/pg and writes app env", async () => {
+    acquireIfNeeded.mockResolvedValue({
+      status: "acquired",
       databaseUrl: "postgresql://cpg_role@127.0.0.1:25432/cpg_repo_main_dev_abcd1234",
       databaseName: "cpg_repo_main_dev_abcd1234",
       dispose: vi.fn(),
@@ -86,7 +86,7 @@ describe("prepareDevDatabase", () => {
 
     await prepareDevDatabase({ appEnvPath, root: dir });
 
-    expect(ensureIfNeeded).toHaveBeenCalledWith({
+    expect(acquireIfNeeded).toHaveBeenCalledWith({
       root: dir,
       mode: "dev",
       url: undefined,

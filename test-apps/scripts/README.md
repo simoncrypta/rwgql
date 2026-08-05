@@ -3,7 +3,7 @@
 Project-specific scripts live here. Shared dev tooling lives in packages:
 
 - [`@cedarjs/pg`](https://www.npmjs.com/package/@cedarjs/pg) — worktree-isolated local Postgres via autopg
-  (`0.1.0-alpha.0` / npm `alpha` dist-tag)
+  (`0.2.0-alpha.0` / npm `alpha` dist-tag)
 - [`@rwgql/prisma-dev`](../../packages/prisma-dev) — Prisma env loading, `@cedarjs/pg` prepare, and Vite tasks
   (`prepare`, `generate`, `migrate-deploy`)
 

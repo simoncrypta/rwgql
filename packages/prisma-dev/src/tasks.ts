@@ -22,7 +22,7 @@ function resolvePrepareDevCommand(): string {
 /**
  * Vite+ tasks for local Prisma + `@cedarjs/pg`.
  *
- * - `prepare` — ensure worktree DB and write package `.env` (Prisma contract)
+ * - `prepare` — acquire worktree DB and write package `.env` (Prisma contract)
  * - `generate` — `prisma generate` (no DB required)
  * - `migrate-deploy` — depends on `prepare`
  */

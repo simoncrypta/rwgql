@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { ensureIfNeeded } from "@cedarjs/pg";
+import { acquireIfNeeded } from "@cedarjs/pg";
 
 function writeAppEnv(appEnvPath: string, databaseUrl: string): void {
   writeFileSync(
@@ -11,7 +11,7 @@ function writeAppEnv(appEnvPath: string, databaseUrl: string): void {
 }
 
 /**
- * Ensure a worktree-scoped Postgres via `@cedarjs/pg` and sync the package `.env`
+ * Acquire a worktree-scoped Postgres via `@cedarjs/pg` and sync the package `.env`
  * (Prisma's contract). `@cedarjs/pg` also writes `.cedarpg/dev.env` as its
  * internal lease cache — apps should read `test-apps/db/.env` / `DATABASE_URL`,
  * not the lease file.
@@ -33,21 +33,21 @@ export async function prepareDevDatabase(
     return;
   }
 
-  const result = await ensureIfNeeded({
+  const result = await acquireIfNeeded({
     root: options.root,
     mode: "dev",
     url: process.env.DATABASE_URL,
     setEnv: true,
   });
 
-  const databaseUrl = result.status === "ensured" ? result.databaseUrl : process.env.DATABASE_URL;
+  const databaseUrl = result.status === "acquired" ? result.databaseUrl : process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error("CEDAR_PG is disabled; set DATABASE_URL explicitly");
   }
 
   writeAppEnv(appEnvPath, databaseUrl);
 
-  if (result.status === "ensured") {
+  if (result.status === "acquired") {
     console.log(`@cedarjs/pg ready: ${result.databaseName}`);
     console.log(`Wrote ${appEnvPath}`);
     return;

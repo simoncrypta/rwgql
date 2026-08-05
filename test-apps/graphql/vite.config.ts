@@ -10,10 +10,13 @@ const graphqlPackageBuilds = [
 export default defineConfig({
   test: {
     environment: "node",
+    // Keep module state across files so `@cedarjs/pg` cloneWorkerDatabase()
+    // (process-once TEMPLATE clone) is not re-run under a fresh isolate.
+    isolate: false,
     fileParallelism: false,
     globalSetup: ["testUtils/globalSetup.ts"],
     include: ["src/**/*.test.ts"],
-    setupFiles: ["testUtils/setup.ts"],
+    setupFiles: ["testUtils/cedarWorker.ts", "testUtils/setup.ts"],
   },
   fmt: {
     ignorePatterns: [

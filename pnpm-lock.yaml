@@ -415,8 +415,8 @@ importers:
   packages/prisma-dev:
     dependencies:
       '@cedarjs/pg':
-        specifier: 0.1.0-alpha.0
-        version: 0.1.0-alpha.0
+        specifier: 0.2.0-alpha.0
+        version: 0.2.0-alpha.0
     devDependencies:
       '@types/node':
         specifier: ^25.6.2
@@ -928,8 +928,8 @@ packages:
   '@blazediff/core@1.9.1':
     resolution: {integrity: sha512-ehg3jIkYKulZh+8om/O25vkvSsXXwC+skXmyA87FFx6A/45eqOkZsBltMw/TVteb0mloiGT8oGRTcjRAz66zaA==}
 
-  '@cedarjs/pg@0.1.0-alpha.0':
-    resolution: {integrity: sha512-tR/aPxz3TnN2i4U0NVOVj0gVBwagTvT+2gnhhHJc72QoJ0HoM8jRldoFrn10odFdEEzCHiEmlaufaO7mfsz6xw==}
+  '@cedarjs/pg@0.2.0-alpha.0':
+    resolution: {integrity: sha512-DXQRuQQ3F5hZD6NtmlH5yIFYIlXIIlBl2MyUCCp6qSCX26dchbO+4ZMbJ9WUwa7xsyfRwc8kW5X+T3Ygs7oXGQ==}
     engines: {node: '>=24'}
     hasBin: true
 
@@ -6774,7 +6774,7 @@ snapshots:
 
   '@blazediff/core@1.9.1': {}
 
-  '@cedarjs/pg@0.1.0-alpha.0':
+  '@cedarjs/pg@0.2.0-alpha.0':
     dependencies:
       pg: 8.22.0
     transitivePeerDependencies:

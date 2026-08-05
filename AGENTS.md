@@ -46,11 +46,11 @@ non-login shells). The startup update script runs `vp install`. Standard command
 
 ### Running the stack
 
-`vp run dev` builds packages, ensures a worktree-scoped Postgres via `@cedarjs/pg` (autopg host), migrates + seeds,
+`vp run dev` builds packages, acquires a worktree-scoped Postgres via `@cedarjs/pg` (autopg host), migrates + seeds,
 then runs the web app and the GraphQL/auth server in parallel (see `README.md` for the exact ports and URLs). Run it
-under tmux since it is long-lived. Install `@cedarjs/pg` from the npm `alpha` dist-tag
-(`0.1.0-alpha.0`). The GraphQL `posts` query is public; `contacts`/`users` are behind the `requireAuth` directive, so
-query them only with a logged-in session.
+under tmux since it is long-lived. Install `@cedarjs/pg` from the npm `alpha` dist-tag (`0.2.0-alpha.0`). The GraphQL
+`posts` query is public; `contacts`/`users` are behind the `requireAuth` directive, so query them only with a
+logged-in session.
 
 ### Tests
 

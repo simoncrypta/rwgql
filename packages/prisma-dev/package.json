@@ -29,7 +29,7 @@
     "prepublishOnly": "vp run build"
   },
   "dependencies": {
-    "@cedarjs/pg": "0.1.0-alpha.0"
+    "@cedarjs/pg": "0.2.0-alpha.0"
   },
   "devDependencies": {
     "@types/node": "^25.6.2",

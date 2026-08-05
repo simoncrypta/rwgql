@@ -1,15 +1,17 @@
-import { startEphemeralTestDatabase, stopEphemeralTestDatabase } from "@rwgql/prisma-dev/test";
+import { createTestDatabaseGlobalSetup } from "@rwgql/prisma-dev/test";
+
+const dbModuleUrl = new URL("../../db/index.ts", import.meta.url).href;
+const cedarSetup = createTestDatabaseGlobalSetup({ dbModuleUrl });
 
 export default async function globalSetup() {
-  const dbModuleUrl = new URL("../../db/index.ts", import.meta.url).href;
-  await startEphemeralTestDatabase({ dbModuleUrl });
+  const teardown = await cedarSetup();
 
   return async () => {
     try {
       const { db } = await import("db");
       await db.$disconnect();
     } finally {
-      await stopEphemeralTestDatabase();
+      await teardown();
     }
   };
 }

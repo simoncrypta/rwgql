@@ -111,7 +111,7 @@ standalone `db` workspace package that both the GraphQL server and scripts impor
    ```
 
    This replaces `yarn rw prisma ...` commands with tasks like `vp run db#generate`, `vp run db#migrate-deploy`,
-   and `vp run db#prepare` (ensure Postgres via `@cedarjs/pg` and sync `DATABASE_URL`).
+   and `vp run db#prepare` (acquire Postgres via `@cedarjs/pg` and sync `DATABASE_URL`).
 
 4. Move `scripts/seed.ts` (previously run with `yarn rw exec seed`) to a plain script executed with `tsx` — in this
    repo it lives at [`test-apps/scripts/seed.ts`](test-apps/scripts/seed.ts) and runs as the root `seed` task. Any other
@@ -514,9 +514,10 @@ Jest and `@redwoodjs/testing` are replaced by Vitest through Vite+ (`vp test`), 
 ### API tests
 
 - Scenarios (`defineScenario`, `ScenarioData`, `*.scenarios.ts`) are replaced by plain fixture functions plus a real
-  ephemeral test database. `@rwgql/prisma-dev/test` starts a throwaway `@cedarjs/pg` (autopg) database in Vitest's
-  `globalSetup`, runs migrations, and tears it down (see
-  [`test-apps/graphql/testUtils/globalSetup.ts`](test-apps/graphql/testUtils/globalSetup.ts)); each test resets tables and
+  ephemeral test database. `@rwgql/prisma-dev/test` uses `@cedarjs/pg/vitest/template`: migrate once in Vitest
+  `globalSetup`, mark TEMPLATE, clone per worker via `setupFiles`, then role-scoped dispose (see
+  [`test-apps/graphql/testUtils/globalSetup.ts`](test-apps/graphql/testUtils/globalSetup.ts) and
+  [`test-apps/graphql/testUtils/cedarWorker.ts`](test-apps/graphql/testUtils/cedarWorker.ts)); each test resets tables and
   seeds what it needs (see [`test-apps/graphql/testUtils/db.ts`](test-apps/graphql/testUtils/db.ts)).
 - Services are called through `callService` from `@rwgql/graphql-typegen/yoga`, which mirrors Redwood's service call
   convention (args first, optional root):
