@@ -18,7 +18,7 @@ packages, each independently runnable:
 RedwoodJS (Cedar)                RedwoodGQL
 ─────────────────                ──────────
 web/                             test-apps/web/      RedwoodSDK app (Cloudflare worker SSR + client) with Apollo Client
-api/  (functions, graphql,      test-apps/graphql/  GraphQL Yoga on Fastify (Nitro), SDL + services + directives
+api/  (functions, graphql,      test-apps/graphql/  GraphQL Yoga on node:http, SDL + services + directives
        services, directives)    test-apps/db/       Prisma schema, migrations, client — its own package
 api/db/ (Prisma)
 ```
@@ -68,7 +68,7 @@ Replace yarn 4 workspaces and the Redwood toolchain (`@redwoodjs/core`, `@redwoo
    `@redwoodjs/core` / `@redwoodjs/project-config` devDependencies. Formatting and linting come from `vp check`
    (Oxfmt + Oxlint), configured in the root [`vite.config.ts`](vite.config.ts).
 3. Ports move from `redwood.toml` into per-app config: the web dev server port lives in the web app's `dev` task
-   (`vp dev --port 8910`) and the API port in `test-apps/graphql/nitro.config.ts` (`devServer.port: 8911`).
+   (`vp dev --port 8910`) and the API port in the graphql `server` task (`vp dev --port 8911`).
 4. Root-level orchestration (`yarn rw dev` equivalent) becomes Vite+ tasks in the root `vite.config.ts`. The `dev`
    task in this repo builds workspace packages, starts Postgres, migrates, seeds, and runs web + GraphQL in parallel.
 
@@ -87,7 +87,7 @@ standalone `db` workspace package that both the GraphQL server and scripts impor
    ```ts
    // test-apps/db/index.ts
    import { PrismaClient } from "@prisma/client";
-   import { ensurePrismaDatabaseUrl } from "@rwgql/prisma-dev";
+   import { ensurePrismaDatabaseUrl } from "./env.ts";
 
    ensurePrismaDatabaseUrl(import.meta.url, { levelsUp: 0 });
 
@@ -96,16 +96,22 @@ standalone `db` workspace package that both the GraphQL server and scripts impor
    export type * from "@prisma/client";
    ```
 
-3. Wire local Postgres and Prisma tasks with `@cedarjs/pg` and `@rwgql/prisma-dev` (see
-   [`test-apps/db/vite.config.ts`](test-apps/db/vite.config.ts)):
+3. Wire local Postgres and Prisma tasks with `@cedarjs/pg` in the db package (see
+   [`test-apps/db/vite.config.ts`](test-apps/db/vite.config.ts) and `prepareDev.ts`):
 
    ```ts
    // test-apps/db/vite.config.ts
-   import { createPrismaTasks } from "@rwgql/prisma-dev/tasks";
-
    export default defineConfig({
      run: {
-       tasks: createPrismaTasks(),
+       tasks: {
+         prepare: { command: "tsx scripts/prepare-dev.ts", cache: false },
+         generate: { command: "prisma generate", input: ["prisma/schema.prisma"] },
+         "migrate-deploy": {
+           command: "prisma migrate deploy",
+           dependsOn: ["prepare"],
+           cache: false,
+         },
+       },
      },
    });
    ```
@@ -140,7 +146,7 @@ export const handler = createGraphQLHandler({
 });
 ```
 
-RedwoodGQL replaces it with GraphQL Yoga on Fastify (served through Nitro), and replaces the glob imports with a
+RedwoodGQL replaces it with GraphQL Yoga on Node `http` (Vite+ `vp dev` via a thin fetch middleware), and replaces the glob imports with a
 generated, checked-in schema registry from `@rwgql/graphql-typegen`.
 
 1. Create `test-apps/graphql/` and move `api/src/graphql/*.sdl.ts`, `api/src/services/*`, and `api/src/directives/*` into
@@ -161,7 +167,7 @@ generated, checked-in schema registry from `@rwgql/graphql-typegen`.
 
    const authDecoder = createAuthDecoder({ cookieName, secret: dbAuthOptions.secret });
 
-   export const createGraphqlYoga = (logger: FastifyBaseLogger) =>
+   export const createGraphqlYoga = () =>
      createYoga({
        graphqlEndpoint: "/graphql",
        plugins: [
@@ -174,20 +180,9 @@ generated, checked-in schema registry from `@rwgql/graphql-typegen`.
      });
    ```
 
-4. Create the Fastify server entry ([`test-apps/graphql/server.node.ts`](test-apps/graphql/server.node.ts)) and point Nitro
-   at it ([`test-apps/graphql/nitro.config.ts`](test-apps/graphql/nitro.config.ts)). The Fastify logger replaces
-   `@redwoodjs/api/logger`'s `createLogger` — it is pino underneath, and `@rwgql/log-formatter` gives you Vite-style
-   per-operation logs in dev:
-
-   ```ts
-   const app = Fastify({
-     logger: isDev
-       ? { transport: { target: "@rwgql/log-formatter", options: { name: "graphql" } } }
-       : true,
-   });
-   ```
-
-   Delete `api/src/lib/logger.ts`; pass `app.log` (or a pino child logger) where you previously imported `logger`.
+4. Create a fetch-first HTTP app ([`test-apps/graphql/src/app.ts`](test-apps/graphql/src/app.ts)) and serve it with
+   `node:http` in production / Vite middleware (`fetchDevServer`) in `vp dev`. Mount Yoga and dbAuth on Web Standard
+   `Request`/`Response` — no framework HTTP layer. Lean operation logs can stay as a Yoga plugin writing to `console`.
 
 5. Update service resolver types. Redwood generated `QueryResolvers` / `MutationResolvers` types via
    `yarn rw g types`; RedwoodGQL generates the same names from the exported SDL via graphql-codegen (the `codegen`
@@ -207,8 +202,8 @@ generated, checked-in schema registry from `@rwgql/graphql-typegen`.
 
 dbAuth survives the migration almost configuration-for-configuration via `@rwgql/dbauth`.
 
-1. `api/src/functions/auth.ts` (`DbAuthHandler` inside a serverless function) becomes a `DbAuthHandlerOptions` object
-   plus one Fastify registration call:
+1. `api/src/functions/auth.ts` (`DbAuthHandler` inside a serverless function) becomes a `DbAuthHandlerOptions` object.
+   Move the options into a typed config module, then mount auth on the fetch handler with `handleDbAuthRequest`:
 
    ```ts
    // test-apps/graphql/src/auth/dbAuthConfig.ts
@@ -227,10 +222,12 @@ dbAuth survives the migration almost configuration-for-configuration via `@rwgql
    ```
 
    ```ts
-   // test-apps/graphql/server.node.ts
-   import { registerDbAuthRoutes } from "@rwgql/dbauth/server";
+   // test-apps/graphql/src/app.ts
+   import { handleDbAuthRequest } from "@rwgql/dbauth/server";
 
-   registerDbAuthRoutes(app, dbAuthOptions);
+   if (pathname === "/auth") {
+     return handleDbAuthRequest(request, dbAuthOptions);
+   }
    ```
 
    The `login`/`signup`/`forgotPassword`/`resetPassword` option shapes intentionally mirror
@@ -514,7 +511,7 @@ Jest and `@redwoodjs/testing` are replaced by Vitest through Vite+ (`vp test`), 
 ### API tests
 
 - Scenarios (`defineScenario`, `ScenarioData`, `*.scenarios.ts`) are replaced by plain fixture functions plus a real
-  ephemeral test database. `@rwgql/prisma-dev/test` uses `@cedarjs/pg/vitest/template`: migrate once in Vitest
+  ephemeral test database. App-local helpers use `@cedarjs/pg/vitest/template`: migrate once in Vitest
   `globalSetup`, mark TEMPLATE, clone per worker via `setupFiles`, then role-scoped dispose (see
   [`test-apps/graphql/testUtils/globalSetup.ts`](test-apps/graphql/testUtils/globalSetup.ts) and
   [`test-apps/graphql/testUtils/cedarWorker.ts`](test-apps/graphql/testUtils/cedarWorker.ts)); each test resets tables and
@@ -540,7 +537,7 @@ Jest and `@redwoodjs/testing` are replaced by Vitest through Vite+ (`vp test`), 
 Delete everything the new stack replaced:
 
 - `redwood.toml`, `graphql.config.js`, all `jest.config.js` files, `prettier.config.js`
-- `api/src/functions/` (both `graphql.ts` and `auth.ts` — replaced by the Fastify server)
+- `api/src/functions/` (both `graphql.ts` and `auth.ts` — replaced by the Yoga/`node:http` server)
 - `api/src/lib/logger.ts` and the Prisma logging in `db.ts`
 - `*.mock.ts`, `*.stories.tsx`, and Storybook config
 - All `@redwoodjs/*` entries in every `package.json`
@@ -573,13 +570,13 @@ auth), and the public blog pages.
 | `@redwoodjs/forms`                                                                                   | react-hook-form + app-local `lib/forms.tsx` shim        | npm       |
 | `@redwoodjs/auth-dbauth-web`                                                                         | `@rwgql/dbauth/web` + `@rwgql/auth`                     | rwgql     |
 | `@redwoodjs/auth-dbauth-api`                                                                         | `@rwgql/dbauth/server` + `/decoder`                     | rwgql     |
-| `@redwoodjs/graphql-server` → `createGraphQLHandler`                                                 | Yoga + Fastify + `@rwgql/graphql-typegen` registry      | rwgql     |
+| `@redwoodjs/graphql-server` → `createGraphQLHandler`                                                 | Yoga + `node:http` + `@rwgql/graphql-typegen` registry  | rwgql     |
 | `@redwoodjs/graphql-server` → directives, errors                                                     | `@rwgql/auth/graphql`                                   | rwgql     |
 | `@redwoodjs/api` → `Decoded`, auth decoding                                                          | `@rwgql/dbauth/decoder`                                 | rwgql     |
-| `@redwoodjs/api/logger`                                                                              | pino (Fastify logger) + `@rwgql/log-formatter`          | rwgql/npm |
+| `@redwoodjs/api/logger`                                                                              | Yoga plugin / console (optional `@rwgql/log-formatter`) | rwgql/npm |
 | `@redwoodjs/api/logger` → Prisma log helpers                                                         | dropped                                                 | dropped   |
 | `@redwoodjs/testing/web`                                                                             | Vitest browser mode + `@testing-library/react`          | npm       |
-| `@redwoodjs/testing/api` → scenarios                                                                 | fixtures + `@rwgql/prisma-dev/test`                     | rwgql     |
+| `@redwoodjs/testing/api` → scenarios                                                                 | fixtures + `@cedarjs/pg/vitest/template`                | npm       |
 | `@redwoodjs/testing/api` → `mockRedwoodDirective`                                                    | app-local `mockValidatorDirective` helper               | app code  |
 | `@redwoodjs/vite`                                                                                    | `rwsdk/vite` + `@cloudflare/vite-plugin` under Vite+    | npm       |
 | `@redwoodjs/core`, `project-config`, `eslint-config`                                                 | Vite+ (`vp check`, `vp test`, tasks)                    | Vite+     |

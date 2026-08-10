@@ -70,10 +70,12 @@ the same value on Cloudflare.
 | Build | `pnpm install && pnpm exec vp run --no-cache deploy:build` |
 | Start | `pnpm exec vp run deploy:start`                            |
 
-- **`deploy:build`** — `bootstrap` + `graphql#build` (Nitro), then asserts key `packages/*/dist` and `.output` artifacts exist.
-- **`deploy:start`** — runs `seed` (which depends on `db#migrate-deploy` → `db#prepare`), then starts Nitro.
+- **`deploy:build`** — `bootstrap` + `graphql#build` (Node pack), then asserts key `packages/*/dist` and graphql
+  server artifacts exist.
+- **`deploy:start`** — runs `seed` (which depends on `db#migrate-deploy` → `db#prepare`), then starts the GraphQL
+  Node server.
 
-With `NODE_ENV=production`, `@rwgql/prisma-dev` skips `@cedarjs/pg` and does not write localhost `test-apps/db/.env`.
+With `NODE_ENV=production`, `db#prepare` skips `@cedarjs/pg` and does not write localhost `test-apps/db/.env`.
 
 `FORCE_DEMO_SEED=1` is set in the Blueprint so each start resets demo data. Remove that env var for a durable database.
 

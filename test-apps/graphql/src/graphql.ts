@@ -1,4 +1,3 @@
-import type { FastifyBaseLogger, FastifyReply, FastifyRequest } from "fastify";
 import type { DocumentNode } from "graphql";
 import { createYoga, type Plugin } from "graphql-yoga";
 import { createAuthDecoder } from "@rwgql/dbauth/server";
@@ -10,8 +9,7 @@ import { getSchema } from "./getSchema.gen.ts";
 
 export type YogaContext = {
   readonly currentUser: Awaited<ReturnType<typeof getCurrentUser>>;
-  readonly reply: FastifyReply;
-  readonly request: FastifyRequest;
+  readonly request: Request;
 };
 
 const authDecoder = createAuthDecoder({ cookieName, secret: dbAuthOptions.secret });
@@ -30,7 +28,7 @@ const getOperationName = (
 
 // Emits one lean log per GraphQL operation: the operation/resolver name plus
 // its execution time, e.g. `ListPosts 12.4ms`.
-const createOperationLoggerPlugin = (logger: FastifyBaseLogger): Plugin<YogaContext> => ({
+const createOperationLoggerPlugin = (): Plugin<YogaContext> => ({
   onExecute({ args }) {
     const start = performance.now();
 
@@ -38,41 +36,41 @@ const createOperationLoggerPlugin = (logger: FastifyBaseLogger): Plugin<YogaCont
       onExecuteDone() {
         const responseTime = performance.now() - start;
         const operationName = getOperationName(args.document, args.operationName);
-        logger.info({ operationName, responseTime }, operationName ?? "anonymous operation");
+        const label = operationName ?? "anonymous operation";
+        console.info(`${label} ${responseTime.toFixed(1)}ms`);
       },
     };
   },
 });
 
-const toWebRequest = (request: FastifyRequest) =>
-  new Request(`http://localhost${request.url}`, {
-    headers: request.headers as HeadersInit,
-    method: request.method,
-  });
-
-export const createGraphqlYoga = (logger: FastifyBaseLogger) =>
+export const createGraphqlYoga = () =>
   createYoga<YogaContext>({
-    context: ({ reply, request }) => ({
+    context: ({ request }) => ({
       currentUser: null,
-      reply,
       request,
     }),
+    fetchAPI: {
+      fetch,
+      Request,
+      Response,
+      ReadableStream,
+    },
     graphqlEndpoint: "/graphql",
     landingPage: true,
     logging: {
-      debug: (...args) => args.forEach((arg) => logger.debug(arg)),
-      error: (...args) => args.forEach((arg) => logger.error(arg)),
-      info: (...args) => args.forEach((arg) => logger.info(arg)),
-      warn: (...args) => args.forEach((arg) => logger.warn(arg)),
+      debug: (...args) => args.forEach((arg) => console.debug(arg)),
+      error: (...args) => args.forEach((arg) => console.error(arg)),
+      info: (...args) => args.forEach((arg) => console.info(arg)),
+      warn: (...args) => args.forEach((arg) => console.warn(arg)),
     },
     plugins: [
-      createOperationLoggerPlugin(logger),
+      createOperationLoggerPlugin(),
       createAuthYogaPlugin({
         decodeSession: (request) => {
-          const webRequest =
-            request instanceof Request ? request : toWebRequest(request as FastifyRequest);
-
-          return authDecoder(webRequest);
+          if (!(request instanceof Request)) {
+            throw new Error("Expected a Web Request for auth decode");
+          }
+          return authDecoder(request);
         },
         getCurrentUser: (session) => getCurrentUser(session as { id: number }),
       }),

@@ -1,5 +1,9 @@
 import { defineConfig } from "vite-plus";
 
+import { fetchDevServer } from "./fetchDevServer.ts";
+
+const isTest = Boolean(process.env.VITEST);
+
 const graphqlPackageBuilds = [
   "@rwgql/auth#build",
   "@rwgql/dbauth#build",
@@ -8,50 +12,63 @@ const graphqlPackageBuilds = [
 ] as const;
 
 export default defineConfig({
+  server: {
+    // App fetch handler owns credentialed CORS (WEB_ORIGIN).
+    cors: false,
+  },
+  plugins: isTest ? [] : [fetchDevServer({ entry: "/src/app.ts" })],
   test: {
     environment: "node",
     // Keep module state across files so `@cedarjs/pg` cloneWorkerDatabase()
     // (process-once TEMPLATE clone) is not re-run under a fresh isolate.
     isolate: false,
     fileParallelism: false,
+    // Unique group: fileParallelism:false changes maxWorkers vs other projects.
+    sequence: { groupOrder: 20 },
     globalSetup: ["testUtils/globalSetup.ts"],
     include: ["src/**/*.test.ts"],
     setupFiles: ["testUtils/cedarWorker.ts", "testUtils/setup.ts"],
   },
   fmt: {
-    ignorePatterns: [
-      ".nitro/**",
-      ".output/**",
-      "schema.graphql",
-      "src/**/*.gen.ts",
-      "types/graphql.d.ts",
-    ],
+    ignorePatterns: ["dist/**", "schema.graphql", "src/**/*.gen.ts", "types/graphql.d.ts"],
   },
   lint: {
-    ignorePatterns: [
-      ".nitro/**",
-      ".output/**",
-      "schema.graphql",
-      "src/**/*.gen.ts",
-      "types/graphql.d.ts",
-    ],
+    ignorePatterns: ["dist/**", "schema.graphql", "src/**/*.gen.ts", "types/graphql.d.ts"],
     options: {
       typeAware: true,
       typeCheck: true,
     },
   },
+  pack: {
+    dts: false,
+    entry: ["src/server.ts"],
+  },
   run: {
     tasks: {
       build: {
-        command: "nitro build",
+        command: "vp pack",
         dependsOn: [...graphqlPackageBuilds, "codegen", "db#generate"],
       },
       check: {
         command: "vp check",
         dependsOn: [...graphqlPackageBuilds, "codegen"],
       },
+      server: {
+        command: "vp dev --port 8911",
+        dependsOn: [...graphqlPackageBuilds, "regenerate-registry"],
+        cache: false,
+      },
+      "codegen-watch": {
+        command: "graphql-codegen --config codegen.ts --watch",
+        dependsOn: ["export-schema", ...graphqlPackageBuilds],
+        cache: false,
+      },
+      // Vite API server. Run `vp run graphql#codegen-watch` separately for watch mode;
+      // root `dev` already one-shots codegen before start.
+      // Do NOT `vp run --parallel server codegen-watch` — extra tokens become
+      // args to `vp dev` and break the fetch middleware.
       dev: {
-        command: "tsx scripts/dev.ts",
+        command: "vp run server",
         dependsOn: [...graphqlPackageBuilds, "regenerate-registry"],
         cache: false,
       },
@@ -63,6 +80,7 @@ export default defineConfig({
           "schema.graphql",
           { pattern: "test-apps/web/src/components/**/*.{ts,tsx}", base: "workspace" },
           { pattern: "test-apps/web/src/pages/**/*.{ts,tsx}", base: "workspace" },
+          { pattern: "packages/graphql-typegen/src/**/*.ts", base: "workspace" },
         ],
         output: [{ pattern: "test-apps/web/src/gql/**", base: "workspace" }, "types/graphql.d.ts"],
       },

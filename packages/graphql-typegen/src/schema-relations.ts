@@ -39,7 +39,10 @@ export const wrapObjectType = (declaration: string, relationFields: string[]): s
   }
 
   const [, typeName, body] = match;
-  return `export type ${typeName} = RelationOptional<\n${body}, '${relationFields.join("' | '")}'>\n`;
+  const typeBody = body.replace(/;\s*$/, "").trim();
+  // Keep `{` on the same line as `RelationOptional<` so formatters do not turn the
+  // type argument into a standalone declaration (`};, 'field'>`).
+  return `export type ${typeName} = RelationOptional<${typeBody}, '${relationFields.join("' | '")}'>;\n`;
 };
 
 export const wrapRelationOptionalTypes = (schema: GraphQLSchema, content: string): string =>

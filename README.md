@@ -3,7 +3,7 @@
 A proof of concept to carry forward the legacy of **RedwoodJS GraphQL Bighorn Epoch** — now **RedwoodGQL**.
 
 RedwoodGQL is a [Vite+](https://viteplus.dev/guide/) monorepo that pairs **RedwoodSDK** on the React front-end with an
-**Apollo Client** and a **GraphQL Yoga** server on **Fastify**. The goal is a set of reusable packages that bring back
+**Apollo Client** and a **GraphQL Yoga** server on **Node `http`**. The goal is a set of reusable packages that bring back
 what people loved about Redwood — Cells, pluggable auth, a preconfigured GraphQL server, Prisma ORM — without the
 baggage that slowed RedwoodJS GraphQL down.
 
@@ -40,7 +40,7 @@ Requires macOS/Linux. Validates Node.js (>= 22.18.0), installs dependencies, and
 
 - **Cells** — declarative data-fetching components built on Apollo Client (`@rwgql/cell`)
 - **Pluggable auth** — directive-based auth on the GraphQL server (`requireAuth`, `skipAuth`)
-- **Preconfigured GraphQL server** — Yoga on Fastify with SDL, resolvers, and directives
+- **Preconfigured GraphQL server** — Yoga on Node `http` with SDL, resolvers, and directives
 - **Prisma ORM** — PostgreSQL data layer with a clear migration story
 - **Monorepo ergonomics** — shared packages, one toolchain, parallel dev servers
 
@@ -88,7 +88,7 @@ writing.
 redwoodGQL/
 ├── test-apps/
 │   ├── web/          # RedwoodSDK React app with Apollo Client
-│   ├── graphql/      # GraphQL Yoga server on Fastify (Nitro)
+│   ├── graphql/      # GraphQL Yoga server (fetch handler + node:http)
 │   ├── db/           # Prisma schema, migrations, and database layer
 │   ├── domain/       # Business logic (planned; services live in graphql/ today)
 │   └── jobs/         # Background workers and queues (planned)
@@ -97,7 +97,6 @@ redwoodGQL/
 │   ├── dbauth/       # @rwgql/dbauth — self-hosted dbAuth provider
 │   ├── cell/         # @rwgql/cell — Redwood-style Cells for Apollo
 │   ├── rwsdk-apollo-client/ # Apollo integration for RedwoodSDK
-│   ├── prisma-dev/   # @rwgql/prisma-dev — Prisma migrate/generate + @cedarjs/pg wiring
 │   ├── log-formatter/# @rwgql/log-formatter — GraphQL operation logging
 │   └── graphql-typegen/ # @rwgql/graphql-typegen — server resolver typegen + Yoga helpers
 └── scripts/          # Render build/start helpers and repo utilities
@@ -109,7 +108,7 @@ The data flow follows a familiar Redwood shape, rebuilt on modern primitives:
 Browser (RedwoodSDK + Apollo Client)
         │
         ▼ GraphQL over HTTP
-GraphQL Yoga / Fastify
+GraphQL Yoga / node:http
         │
         ▼
 Domain services
@@ -126,10 +125,9 @@ future extraction layer.
 | Package                      | Description                                                                             |
 | ---------------------------- | --------------------------------------------------------------------------------------- |
 | `@rwgql/auth`                | Pluggable auth — Yoga plugins, `requireAuth`/`skipAuth`                                 |
-| `@rwgql/dbauth`              | Self-hosted dbAuth for Fastify/Yoga and RWSDK web                                       |
+| `@rwgql/dbauth`              | Self-hosted dbAuth for Fetch handlers / Yoga and RWSDK web                              |
 | `@rwgql/cell`                | `createCell` — query components with Loading/Empty/etc.                                 |
 | `@rwgql/rwsdk-apollo-client` | Apollo Client provider for RedwoodSDK ([setup](packages/rwsdk-apollo-client/README.md)) |
-| `@rwgql/prisma-dev`          | Prisma migrate/generate tasks + `@cedarjs/pg` local Postgres wiring                     |
 | `@rwgql/log-formatter`       | Vite-style per-operation GraphQL logging                                                |
 | `@rwgql/graphql-typegen`     | Server resolver typegen from SDL + Yoga resolver wiring                                 |
 
@@ -200,13 +198,13 @@ may still change.
 - **Web app** — RedwoodSDK + Apollo Client; scaffold pages (Posts, Contacts) use Cells; cached public
   blog routes use server-side GraphQL via `createServerGraphql` (see `@rwgql/rwsdk-apollo-client`
   README)
-- **GraphQL API** — Yoga on Fastify with SDL, resolvers, Prisma services, auth directives,
+- **GraphQL API** — Yoga on Node `http` with SDL, resolvers, Prisma services, auth directives,
   and generated resolver types via `@rwgql/graphql-typegen`
 - **Auth** — `@rwgql/dbauth` (login, signup, logout, forgot/reset password), session cookies,
   web route guards, and `requireAuth`/`skipAuth` on the schema
 - **Data layer** — Prisma schema, migrations, and seed data in `test-apps/db`
-- **Tooling packages** — `@cedarjs/pg` (`0.2.0-alpha.0`), `@rwgql/prisma-dev`,
-  `@rwgql/log-formatter`, `@rwgql/graphql-typegen`
+- **Tooling packages** — `@cedarjs/pg` (`0.2.0-alpha.0`), `@rwgql/log-formatter`,
+  `@rwgql/graphql-typegen`
 
 ### Parity vs classic RedwoodJS (Cedar)
 

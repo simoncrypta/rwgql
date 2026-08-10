@@ -18,5 +18,5 @@
       "types/*": ["./types/*"]
     }
   },
-  "include": ["nitro.config.ts", "server.node.ts", "src", "types", "testUtils"]
+  "include": ["src", "types", "testUtils", "scripts", "vite.config.ts", "fetchDevServer.ts"]
 }

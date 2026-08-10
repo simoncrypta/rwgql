@@ -59,10 +59,10 @@ describe("wrapObjectType", () => {
 }`;
 
     expect(wrapObjectType(declaration, ["author"])).toBe(
-      `export type Post = RelationOptional<\n{
+      `export type Post = RelationOptional<{
   id: number;
   author: User;
-}, 'author'>\n`,
+}, 'author'>;\n`,
     );
   });
 

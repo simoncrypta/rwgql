@@ -26,7 +26,8 @@ describe("users", () => {
     const fixture = await seedPostsFixture();
     const userResult = await callService(user, { id: fixture.post.one.authorId });
     const postsResult = await callService(User.posts!, {}, userResult!);
+    const posts = postsResult as Array<{ id: number }>;
 
-    expect(postsResult.some((entry) => entry.id === fixture.post.one.id)).toBe(true);
+    expect(posts.some((entry) => entry.id === fixture.post.one.id)).toBe(true);
   });
 });

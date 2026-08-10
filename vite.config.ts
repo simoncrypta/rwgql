@@ -5,6 +5,15 @@ export default defineConfig({
   staged: {
     "*": "vp check --fix",
   },
+  fmt: {
+    ignorePatterns: [
+      "test-apps/graphql/types/graphql.d.ts",
+      "test-apps/graphql/schema.graphql",
+      "test-apps/graphql/src/**/*.gen.ts",
+      "test-apps/web/src/**/*.gen.ts",
+      "test-apps/web/src/gql/**",
+    ],
+  },
   lint: {
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
     rules: { "vite-plus/prefer-vite-plus-imports": "error" },
@@ -18,7 +27,7 @@ export default defineConfig({
   },
   test: {
     exclude: [...configDefaults.exclude],
-    projects: ["packages/*", "test-apps/graphql", "test-apps/web"],
+    projects: ["packages/*", "test-apps/db", "test-apps/graphql", "test-apps/web"],
   },
   run: {
     cache: true,
@@ -32,13 +41,13 @@ export default defineConfig({
         // Fresh clones need real dist artifacts; callers should use --no-cache.
         dependsOn: ["bootstrap", "graphql#build"],
         command:
-          "test -f packages/auth/dist/graphql.mjs && test -f packages/dbauth/dist/server.mjs && test -f packages/graphql-typegen/dist/index.mjs && test -f packages/log-formatter/dist/index.mjs && test -f test-apps/graphql/.output/server/index.mjs",
+          "test -f packages/auth/dist/graphql.mjs && test -f packages/dbauth/dist/server.mjs && test -f packages/graphql-typegen/dist/index.mjs && test -f packages/log-formatter/dist/index.mjs && test -f test-apps/graphql/dist/server.mjs",
         cache: false,
       },
       "deploy:start": {
         // migrate + seed run via seed → db#migrate-deploy → db#prepare (@cedarjs/pg no-ops in production).
         dependsOn: ["seed"],
-        command: "node test-apps/graphql/.output/server/index.mjs",
+        command: "node test-apps/graphql/dist/server.mjs",
         cache: false,
       },
       dev: {
