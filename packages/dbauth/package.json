@@ -36,11 +36,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.6.2",
-    "fastify": "^5.8.5",
     "typescript": "catalog:",
     "vite-plus": "catalog:"
-  },
-  "peerDependencies": {
-    "fastify": "^5.0.0"
   }
 }

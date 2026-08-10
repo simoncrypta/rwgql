@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { ensurePrismaDatabaseUrl } from "@rwgql/prisma-dev";
+import { ensurePrismaDatabaseUrl } from "./env.ts";
 
 ensurePrismaDatabaseUrl(import.meta.url, { levelsUp: 0 });
 const databaseUrl = process.env.DATABASE_URL;

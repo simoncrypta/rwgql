@@ -8,7 +8,6 @@
   },
   "devDependencies": {
     "@rwgql/dbauth": "workspace:*",
-    "@rwgql/prisma-dev": "workspace:*",
     "@typescript/native-preview": "catalog:",
     "db": "workspace:*",
     "tsx": "catalog:",

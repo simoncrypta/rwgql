@@ -1,4 +1,4 @@
-import { createTestDatabaseGlobalSetup } from "@rwgql/prisma-dev/test";
+import { createTestDatabaseGlobalSetup } from "./testDatabase.ts";
 
 const dbModuleUrl = new URL("../../db/index.ts", import.meta.url).href;
 const cedarSetup = createTestDatabaseGlobalSetup({ dbModuleUrl });

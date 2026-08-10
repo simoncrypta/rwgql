@@ -3,13 +3,8 @@ import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import {
-  cloneWorkerDatabase,
-  createGlobalSetup,
-  type SetupTemplateModeOptions,
-} from "@cedarjs/pg/vitest/template";
+import { createGlobalSetup, type SetupTemplateModeOptions } from "@cedarjs/pg/vitest/template";
 
-export { cloneWorkerDatabase };
 export type { SetupTemplateModeOptions };
 
 export interface TestDatabaseGlobalSetupOptions {
@@ -54,10 +49,6 @@ function runMigrations(dbPackageRoot: string): void {
 /**
  * Vitest `globalSetup` factory: acquire → Prisma migrate once → mark TEMPLATE.
  * Pair with `cloneWorkerDatabase()` in a setupFile so each worker gets a clone.
- *
- * Stock `@cedarjs/pg/vitest` is one shared test DB only; this uses
- * `@cedarjs/pg/vitest/template` so migrate stays app-owned (Prisma) while cedar-pg
- * owns TEMPLATE + per-worker clones + role-scoped dispose.
  */
 export function createTestDatabaseGlobalSetup(options: TestDatabaseGlobalSetupOptions) {
   const dbPackageRoot = resolveDbPackageRoot(options.dbModuleUrl);

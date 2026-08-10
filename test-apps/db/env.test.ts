@@ -29,7 +29,7 @@ describe("ensurePrismaDatabaseUrl", () => {
     process.env.DATABASE_URL = "postgresql://existing";
     delete process.env.PRISMA_DATABASE_URL;
 
-    const dir = mkdtempSync(join(tmpdir(), "prisma-dev-"));
+    const dir = mkdtempSync(join(tmpdir(), "db-env-"));
     const moduleUrl = pathToFileURL(join(dir, "src", "client.ts")).href;
 
     ensurePrismaDatabaseUrl(moduleUrl);
@@ -41,7 +41,7 @@ describe("ensurePrismaDatabaseUrl", () => {
     delete process.env.DATABASE_URL;
     process.env.PRISMA_DATABASE_URL = "postgresql://render-internal";
 
-    const dir = mkdtempSync(join(tmpdir(), "prisma-dev-"));
+    const dir = mkdtempSync(join(tmpdir(), "db-env-"));
     const moduleUrl = pathToFileURL(join(dir, "src", "client.ts")).href;
 
     ensurePrismaDatabaseUrl(moduleUrl);
@@ -53,7 +53,7 @@ describe("ensurePrismaDatabaseUrl", () => {
     delete process.env.DATABASE_URL;
     delete process.env.PRISMA_DATABASE_URL;
 
-    const dir = mkdtempSync(join(tmpdir(), "prisma-dev-"));
+    const dir = mkdtempSync(join(tmpdir(), "db-env-"));
     writeFileSync(
       join(dir, ".env.defaults"),
       'DATABASE_URL="postgresql://postgres@localhost:25432/test"\n',

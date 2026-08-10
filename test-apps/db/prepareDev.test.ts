@@ -18,7 +18,7 @@ describe("prepareDevDatabase", () => {
   let dir: string;
 
   beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), "prisma-dev-prepare-"));
+    dir = mkdtempSync(join(tmpdir(), "db-prepare-"));
     acquireIfNeeded.mockReset();
     delete process.env.NODE_ENV;
     delete process.env.DATABASE_URL;

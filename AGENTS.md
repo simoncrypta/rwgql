@@ -11,9 +11,9 @@ RedwoodJS (Cedar) app.
 - Treat `packages/` as the WIP "framework" / SDK surface. Each package should keep dependencies minimal, expose focused
   primitives, and work in isolation when its direct peer requirements are present.
 - Prefer package boundaries that let users adopt one block at a time. For example, `@rwgql/cell` should work with
-  Apollo Client, `@rwgql/rwsdk-apollo-client` should require only RedwoodSDK plus Apollo GraphQL pieces,
-  `@cedarjs/pg` should work anywhere Vite Task / Vitest is available, and `@rwgql/prisma-dev` should require Vite Task
-  plus Prisma (and optionally `@cedarjs/pg` for local Postgres).
+  Apollo Client, `@rwgql/rwsdk-apollo-client` should require only RedwoodSDK plus Apollo GraphQL pieces, and
+  `@cedarjs/pg` should work anywhere Vite Task / Vitest is available. App-local Prisma glue (prepare `.env`,
+  migrate/generate tasks, Vitest migrate hook) lives in the db / graphql test apps — not a second Postgres layer.
 - Use [migrating-from-redwoodjs.md](migrating-from-redwoodjs.md) and GitHub parity issues for Cedar → RedwoodGQL
   migration guidance; do not recreate a full classic Redwood app in-tree unless the task is explicitly about parity.
 

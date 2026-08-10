@@ -21,6 +21,8 @@ You usually do not need to run anything in this directory manually.
 | Path                   | Purpose                                       |
 | ---------------------- | --------------------------------------------- |
 | `index.ts`             | Exports `db` (`PrismaClient`) and model types |
+| `env.ts`               | Load `DATABASE_URL` for Prisma                |
+| `prepareDev.ts`        | Acquire via `@cedarjs/pg` and write `.env`    |
 | `prisma/schema.prisma` | Schema                                        |
 | `prisma/migrations/`   | Migration history                             |
 | `vite.config.ts`       | `db#…` task definitions                       |
@@ -64,7 +66,12 @@ cd test-apps/db && vp exec prisma migrate dev --name describe_your_change
 `@cedarjs/pg` also keeps an internal lease file at the repo-root `.cedarpg/dev.env`. Do not point Prisma or app code
 at that file — treat it as `@cedarjs/pg` private state.
 
-GraphQL service tests use `@cedarjs/pg/vitest/template` (migrate once + per-worker clones) via `@rwgql/prisma-dev/test`, so `vp test` does not
-read or write the dev database seeded by `test-apps/scripts/seed.ts`.
+While `vp run dev` is up, the graphql Vite process (`test-apps/graphql`) prints a cedar-pg status panel and registers
+shortcuts (then Enter): **`d`** show DB URL / lease, **`p`** open Prisma Studio with the worktree
+`DATABASE_URL`. Or from the repo root: `cedarpg status` / `cedarpg studio`.
+
+GraphQL service tests use `@cedarjs/pg/vitest/template` (migrate once + per-worker clones) via
+`test-apps/graphql/testUtils`, so `vp test` does not read or write the dev database seeded by
+`test-apps/scripts/seed.ts`.
 
 Override values by editing `.env` locally — it is gitignored.

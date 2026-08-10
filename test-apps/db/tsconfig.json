@@ -5,7 +5,7 @@
     "moduleDetection": "force",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "types": ["node"],
+    "types": ["node", "vite-plus/test"],
     "strict": true,
     "noUnusedLocals": true,
     "noEmit": true,
@@ -15,5 +15,13 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true
   },
-  "include": ["index.ts", "vite.config.ts"]
+  "include": [
+    "index.ts",
+    "env.ts",
+    "env.test.ts",
+    "prepareDev.ts",
+    "prepareDev.test.ts",
+    "scripts",
+    "vite.config.ts"
+  ]
 }

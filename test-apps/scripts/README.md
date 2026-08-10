@@ -1,10 +1,10 @@
 # Workspace scripts
 
-Project-specific scripts live here. Shared dev tooling lives in packages:
+Project-specific scripts live here. Shared / app-local tooling:
 
 - [`@cedarjs/pg`](https://www.npmjs.com/package/@cedarjs/pg) — worktree-isolated local Postgres via autopg
   (`0.2.0-alpha.0` / npm `alpha` dist-tag)
-- [`@rwgql/prisma-dev`](../../packages/prisma-dev) — Prisma env loading, `@cedarjs/pg` prepare, and Vite tasks
+- [`test-apps/db`](../db) — Prisma env loading, `@cedarjs/pg` prepare, and Vite tasks
   (`prepare`, `generate`, `migrate-deploy`)
 
 Local Postgres for this app is provisioned by `vp run db#prepare`. Prisma tasks live in
@@ -25,7 +25,7 @@ Root [`vite.config.ts`](../../vite.config.ts) orchestrates workspace flows:
 - `seed` — runs `test-apps/scripts/seed.ts`; depends on `db#migrate-deploy`
 - `ready` — format, lint, type-check, tests, and build across the workspace (`vp run ready`)
 
-[`db/vite.config.ts`](../db/vite.config.ts) owns the db task graph via `createPrismaTasks()`:
+[`db/vite.config.ts`](../db/vite.config.ts) owns the db task graph:
 
 - `prepare`
 - `generate`, `migrate-deploy`
