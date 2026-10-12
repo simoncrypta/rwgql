@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "redwoodGQL",
+  "project_id": "f1c1000d-8746-41b5-9be7-723b303a970c"
+}
