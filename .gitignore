@@ -24,10 +24,20 @@ dist-ssr
 *.sln
 *.sw?
 
-# AI agent worktrees
-.claude/worktrees/
+# Local agent and issue-tracker config
+.agents/
+.beads/
+.claude/
+.codex/
+.cursor/
+
+# Local codegraph index (symlink into ~/.omo)
+.codegraph
 
 .qmd/
+
+# Vite+ generated git-hook cache
+.vite-hooks/_/
 
 # Local PostgreSQL (@cedarjs/pg / autopg)
 .cedarpg/
@@ -38,9 +48,8 @@ test-apps/db/scripts/.env
 # GraphQL codegen
 test-apps/cedar/web/src/gql/
 
-# Beads / Dolt files (added by bd init)
+# Beads / Dolt files that can sit outside .beads/
 .dolt/
 *.db
 .beads-credential-key
-.beads/proxieddb/
 *.gate.lock*
