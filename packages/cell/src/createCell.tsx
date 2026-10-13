@@ -1,7 +1,7 @@
-import type React from "react";
+import React, { Suspense } from "react";
 
 import type { OperationVariables } from "@apollo/client";
-import { useQuery } from "@apollo/client/react";
+import { useQuery, useSuspenseQuery } from "@apollo/client/react";
 
 import type {
   BeforeQueryOptions,
@@ -11,6 +11,7 @@ import type {
   CreateCellBaseOptions,
   CreateCellOptions,
   CreateCellOptionsWithBeforeQuery,
+  CellQueryResult,
   InputVarProps,
 } from "./types.js";
 
@@ -65,9 +66,58 @@ function createCellComponent<
   isEmpty = defaultIsEmpty,
   displayName = "Cell",
   beforeQuery,
+  suspense = false,
 }: CreateCellBaseOptions<TData, TVariables, TCellProps> & {
   readonly beforeQuery?: (props: TBeforeQueryProps) => BeforeQueryResult<TData, TVariables>;
 }): React.ComponentType<React.PropsWithChildren<TCellProps>> {
+  if (suspense) {
+    function SuspenseCellBody(props: React.PropsWithChildren<TCellProps>) {
+      const query = typeof QUERY === "function" ? QUERY(props) : QUERY;
+      const { notifyOnNetworkStatusChange: _notify, ...options } = getQueryOptions<
+        TData,
+        TVariables,
+        TCellProps,
+        TBeforeQueryProps
+      >(props, beforeQuery);
+      const result = useSuspenseQuery<TData, TVariables>(
+        query,
+        options as useSuspenseQuery.Options<TVariables>,
+      );
+      // Same shape where Cells use it (data, refetch, fetchMore, networkStatus).
+      const queryResult = result as unknown as CellQueryResult<TData, TVariables>;
+      const data = result.data as TData;
+      const State = Empty && isEmpty(data) ? Empty : Success;
+
+      return <State {...props} {...data} queryResult={queryResult} />;
+    }
+
+    function SuspenseCell(props: React.PropsWithChildren<TCellProps>) {
+      const variables = getQueryOptions<TData, TVariables, TCellProps, TBeforeQueryProps>(
+        props,
+        beforeQuery,
+      ).variables;
+
+      return (
+        <CellErrorBoundary
+          key={JSON.stringify(variables ?? {})}
+          renderFailure={
+            Failure
+              ? (error) => <Failure {...props} error={error} errorCode={getErrorCode(error)} />
+              : undefined
+          }
+        >
+          <Suspense fallback={<Loading {...props} />}>
+            <SuspenseCellBody {...props} />
+          </Suspense>
+        </CellErrorBoundary>
+      );
+    }
+
+    SuspenseCell.displayName = displayName;
+
+    return SuspenseCell;
+  }
+
   function Cell(props: React.PropsWithChildren<TCellProps>) {
     const query = typeof QUERY === "function" ? QUERY(props) : QUERY;
     const queryOptions = getQueryOptions<TData, TVariables, TCellProps, TBeforeQueryProps>(
@@ -116,6 +166,33 @@ class CellRenderStateError extends Error {
       "Cannot render Cell: reached an unexpected state where the query succeeded but `data` is null.",
     );
     this.name = "CellRenderStateError";
+  }
+}
+
+type CellErrorBoundaryProps = {
+  readonly children: React.ReactNode;
+  readonly renderFailure?: (error: Error) => React.ReactNode;
+};
+
+/** Renders a suspense Cell's Failure; without one, rethrows like the useQuery Cell does. */
+class CellErrorBoundary extends React.Component<CellErrorBoundaryProps, { error?: Error }> {
+  override state: { error?: Error } = {};
+
+  static getDerivedStateFromError(error: unknown) {
+    return { error: error instanceof Error ? error : new Error(String(error)) };
+  }
+
+  override render() {
+    const { error } = this.state;
+    if (!error) {
+      return this.props.children;
+    }
+
+    if (!this.props.renderFailure) {
+      throw error;
+    }
+
+    return this.props.renderFailure(error);
   }
 }
 

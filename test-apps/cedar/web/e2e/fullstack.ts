@@ -49,6 +49,13 @@ const hydrated = (page: import("playwright").Page) =>
     .waitForFunction(() => "__reactRouterRouteModules" in window)
     .then(() => page.waitForLoadState("networkidle"));
 
+// Navigating away mid-request aborts React Router's lazy /__manifest fetches, which it logs as
+// console errors; let the current page settle first.
+const settledGoto = async (page: import("playwright").Page, url: string) => {
+  await page.waitForLoadState("networkidle");
+  await page.goto(url);
+};
+
 const stop = (child: ChildProcess) => {
   try {
     process.kill(-child.pid!, "SIGTERM");
@@ -104,6 +111,16 @@ try {
   check("login (dbAuth) returns to redirectTo", true);
   await page.getByText("Migrating Redwood Cells").waitFor();
   check("PostsCell lists posts from the real API", true);
+  const cookieHeader = (await page.context().cookies(web))
+    .map(({ name, value }) => `${name}=${value}`)
+    .join("; ");
+  const postsSsr = await (
+    await fetch(`${web}/posts`, { headers: { cookie: cookieHeader } })
+  ).text();
+  check(
+    "suspense PostsCell SSR includes posts from Postgres",
+    postsSsr.includes("Migrating Redwood Cells"),
+  );
 
   const title = `E2E post ${Date.now()}`;
   await page.getByRole("link", { name: "New Post" }).click();
@@ -133,14 +150,14 @@ try {
   await page.getByText(`${title} (edited)`).waitFor({ state: "detached" });
   check("delete post", true);
 
-  await page.goto(`${web}/contacts`);
+  await settledGoto(page, `${web}/contacts`);
   await page.getByRole("heading", { name: "Contacts" }).waitFor();
   check("private contacts page renders when logged in", page.url() === `${web}/contacts`);
 
-  await page.goto(`${web}/`);
+  await settledGoto(page, `${web}/`);
   await page.getByRole("link", { name: "Log Out" }).click();
   await page.getByRole("link", { name: "Log In" }).waitFor();
-  await page.goto(`${web}/posts`);
+  await settledGoto(page, `${web}/posts`);
   await page.waitForURL(/\/login\?redirectTo=%2Fposts$/);
   check("logout clears the session (private route redirects again)", true);
 

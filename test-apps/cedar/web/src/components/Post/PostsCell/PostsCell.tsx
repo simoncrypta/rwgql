@@ -53,4 +53,6 @@ export default createCell<
   Empty,
   Failure,
   Success,
+  // Server-rendered with the list instead of Loading (opt-in, see @rwgql/cell).
+  suspense: true,
 });

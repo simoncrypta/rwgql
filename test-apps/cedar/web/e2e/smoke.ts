@@ -97,6 +97,11 @@ try {
   const authed = await get("/posts", sessionCookie);
   check("GET /posts with session → 200", authed.status === 200, String(authed.status));
   check("private route has no public cache", authed.headers.get("cache-control") !== publicCache);
+  const postsHtml = await authed.text();
+  check(
+    "suspense PostsCell is server-rendered with data, not Loading",
+    postsHtml.includes("Second post") && !postsHtml.includes("Loading..."),
+  );
 
   const badParam = await get("/posts/abc", sessionCookie);
   check(

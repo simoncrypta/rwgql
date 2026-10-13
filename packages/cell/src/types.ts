@@ -97,6 +97,12 @@ export interface CreateCellBaseOptions<
   readonly Empty?: React.ComponentType<TCellProps & TData & CellQueryResultProp<TData, TVariables>>;
   readonly isEmpty?: (data: TData) => boolean;
   readonly displayName?: string;
+  /**
+   * Fetch with `useSuspenseQuery` (Loading is the Suspense fallback). With a streaming SSR setup
+   * such as Apollo's React Router integration, the data is rendered on the server instead of
+   * Loading. Opt-in; Cedar Cells use `useQuery`.
+   */
+  readonly suspense?: boolean;
 }
 
 type CellQueryResultProp<TData extends object, TVariables extends OperationVariables> = {
