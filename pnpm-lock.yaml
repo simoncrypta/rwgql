@@ -225,6 +225,9 @@ overrides:
   vite: npm:@voidzero-dev/vite-plus-core@1.1.0
   vitest: 5.0.3
 
+patchedDependencies:
+  '@react-router/dev@7.18.4': 102439f3eccdbd291c590b1bb64acb979303b60255ea309406825b827cbf0a4f
+
 importers:
 
   .:
@@ -551,7 +554,7 @@ importers:
         version: 4.20260426.1
       '@react-router/dev':
         specifier: 7.18.4
-        version: 7.18.4(@types/node@25.6.2)(@typescript/native-preview@7.0.0-dev.20260707.2)(@voidzero-dev/vite-plus-core@1.1.0(@types/node@25.6.2)(@typescript/native-preview@7.0.0-dev.20260707.2)(esbuild@0.28.1)(jiti@1.21.7)(terser@5.48.0)(tsx@4.22.4)(typescript@7.0.1-rc)(yaml@2.9.0))(esbuild@0.28.1)(jiti@1.21.7)(react-router@7.18.4(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-server-dom-webpack@19.2.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(webpack@5.107.2(esbuild@0.28.1)(postcss@8.5.15)))(terser@5.48.0)(tsx@4.22.4)(typescript@7.0.1-rc)(wrangler@4.85.0(@cloudflare/workers-types@4.20260426.1))(yaml@2.9.0)
+        version: 7.18.4(patch_hash=102439f3eccdbd291c590b1bb64acb979303b60255ea309406825b827cbf0a4f)(@types/node@25.6.2)(@typescript/native-preview@7.0.0-dev.20260707.2)(@voidzero-dev/vite-plus-core@1.1.0(@types/node@25.6.2)(@typescript/native-preview@7.0.0-dev.20260707.2)(esbuild@0.28.1)(jiti@1.21.7)(terser@5.48.0)(tsx@4.22.4)(typescript@7.0.1-rc)(yaml@2.9.0))(esbuild@0.28.1)(jiti@1.21.7)(react-router@7.18.4(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-server-dom-webpack@19.2.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(webpack@5.107.2(esbuild@0.28.1)(postcss@8.5.15)))(terser@5.48.0)(tsx@4.22.4)(typescript@7.0.1-rc)(wrangler@4.85.0(@cloudflare/workers-types@4.20260426.1))(yaml@2.9.0)
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -4002,9 +4005,6 @@ packages:
   es-module-lexer@1.7.0:
     resolution: {integrity: sha512-jEQoCwk8hyb2AZziIOLhDqpm5+2ww5uIE6lkO/6jcOCusfk6LhMHpXXfBLXTZ7Ydyt0j4VoUQv6uGNYbdW+kBA==}
 
-  es-module-lexer@2.1.0:
-    resolution: {integrity: sha512-n27zTYMjYu1aj4MjCWzSP7G9r75utsaoc8m61weK+W8JMBGGQybd43GstCXZ3WNmSFtGT9wi59qQTW6mhTR5LQ==}
-
   es-module-lexer@2.3.2:
     resolution: {integrity: sha512-poHGpORABojJJucnV9KbOavETW8lBVnphkW77ER5/BQ5Fz7oXSoCNek7IH3vR5nRjdsEz926ibFYX8KtLQmdyw==}
 
@@ -5255,10 +5255,6 @@ packages:
   picomatch@2.3.2:
     resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
     engines: {node: '>=8.6'}
-
-  picomatch@4.0.4:
-    resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
-    engines: {node: '>=12'}
 
   picomatch@4.0.7:
     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
@@ -7803,7 +7799,7 @@ snapshots:
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
-      '@jridgewell/sourcemap-codec': 1.5.5
+      '@jridgewell/sourcemap-codec': 1.6.0
       '@jridgewell/trace-mapping': 0.3.31
 
   '@jridgewell/remapping@2.3.5':
@@ -7825,12 +7821,12 @@ snapshots:
   '@jridgewell/trace-mapping@0.3.31':
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
-      '@jridgewell/sourcemap-codec': 1.5.5
+      '@jridgewell/sourcemap-codec': 1.6.0
 
   '@jridgewell/trace-mapping@0.3.9':
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
-      '@jridgewell/sourcemap-codec': 1.5.5
+      '@jridgewell/sourcemap-codec': 1.6.0
 
   '@mdx-js/mdx@3.1.1':
     dependencies:
@@ -8067,7 +8063,7 @@ snapshots:
       detect-libc: 2.1.2
       is-glob: 4.0.3
       node-addon-api: 7.1.1
-      picomatch: 4.0.4
+      picomatch: 4.0.7
     optionalDependencies:
       '@parcel/watcher-android-arm64': 2.5.6
       '@parcel/watcher-darwin-arm64': 2.5.6
@@ -8164,7 +8160,7 @@ snapshots:
       - react-native-b4a
       - supports-color
 
-  '@react-router/dev@7.18.4(@types/node@25.6.2)(@typescript/native-preview@7.0.0-dev.20260707.2)(@voidzero-dev/vite-plus-core@1.1.0(@types/node@25.6.2)(@typescript/native-preview@7.0.0-dev.20260707.2)(esbuild@0.28.1)(jiti@1.21.7)(terser@5.48.0)(tsx@4.22.4)(typescript@7.0.1-rc)(yaml@2.9.0))(esbuild@0.28.1)(jiti@1.21.7)(react-router@7.18.4(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-server-dom-webpack@19.2.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(webpack@5.107.2(esbuild@0.28.1)(postcss@8.5.15)))(terser@5.48.0)(tsx@4.22.4)(typescript@7.0.1-rc)(wrangler@4.85.0(@cloudflare/workers-types@4.20260426.1))(yaml@2.9.0)':
+  '@react-router/dev@7.18.4(patch_hash=102439f3eccdbd291c590b1bb64acb979303b60255ea309406825b827cbf0a4f)(@types/node@25.6.2)(@typescript/native-preview@7.0.0-dev.20260707.2)(@voidzero-dev/vite-plus-core@1.1.0(@types/node@25.6.2)(@typescript/native-preview@7.0.0-dev.20260707.2)(esbuild@0.28.1)(jiti@1.21.7)(terser@5.48.0)(tsx@4.22.4)(typescript@7.0.1-rc)(yaml@2.9.0))(esbuild@0.28.1)(jiti@1.21.7)(react-router@7.18.4(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-server-dom-webpack@19.2.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(webpack@5.107.2(esbuild@0.28.1)(postcss@8.5.15)))(terser@5.48.0)(tsx@4.22.4)(typescript@7.0.1-rc)(wrangler@4.85.0(@cloudflare/workers-types@4.20260426.1))(yaml@2.9.0)':
     dependencies:
       '@babel/core': 7.29.7
       '@babel/generator': 7.29.7
@@ -9723,8 +9719,6 @@ snapshots:
 
   es-module-lexer@1.7.0: {}
 
-  es-module-lexer@2.1.0: {}
-
   es-module-lexer@2.3.2: {}
 
   es-object-atoms@1.1.2:
@@ -9934,9 +9928,9 @@ snapshots:
     dependencies:
       pend: 1.2.0
 
-  fdir@6.5.0(picomatch@4.0.4):
+  fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:
-      picomatch: 4.0.4
+      picomatch: 4.0.7
 
   fetch-blob@3.2.0:
     dependencies:
@@ -10441,7 +10435,7 @@ snapshots:
       webidl-conversions: 8.0.1
       whatwg-mimetype: 4.0.0
       whatwg-url: 15.1.0
-      ws: 8.21.0
+      ws: 8.22.0
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - '@noble/hashes'
@@ -11363,8 +11357,6 @@ snapshots:
 
   picomatch@2.3.2: {}
 
-  picomatch@4.0.4: {}
-
   picomatch@4.0.7: {}
 
   pify@2.3.0: {}
@@ -12256,8 +12248,8 @@ snapshots:
 
   tinyglobby@0.2.17:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.4)
-      picomatch: 4.0.4
+      fdir: 6.5.0(picomatch@4.0.7)
+      picomatch: 4.0.7
 
   tinypool@2.2.0: {}
 
@@ -12703,7 +12695,7 @@ snapshots:
   vite@8.0.16(@types/node@25.6.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0):
     dependencies:
       lightningcss: 1.33.0
-      picomatch: 4.0.4
+      picomatch: 4.0.7
       postcss: 8.5.15
       rolldown: 1.0.3
       tinyglobby: 0.2.17
@@ -12850,7 +12842,7 @@ snapshots:
       browserslist: 4.28.2
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.24.0
-      es-module-lexer: 2.1.0
+      es-module-lexer: 2.3.2
       eslint-scope: 5.1.1
       events: 3.3.0
       glob-to-regexp: 0.4.1
@@ -12889,7 +12881,7 @@ snapshots:
       browserslist: 4.28.2
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.24.0
-      es-module-lexer: 2.1.0
+      es-module-lexer: 2.3.2
       eslint-scope: 5.1.1
       events: 3.3.0
       glob-to-regexp: 0.4.1
