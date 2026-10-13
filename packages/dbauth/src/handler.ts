@@ -395,8 +395,10 @@ const validateResetToken = async (request: Request, options: DbAuthHandlerOption
 const getToken = async (request: Request, options: DbAuthHandlerOptions) => {
   const userId = getSessionUserId(request, options);
 
+  // Logged out is a normal state, not an error (Cedar answers 200 too); a 401 here made
+  // browsers log a failed request on every anonymous page view.
   if (!userId) {
-    return Response.json({ error: "Not authenticated" }, { status: 401 });
+    return Response.json(null);
   }
 
   const model = getModel(options);
@@ -405,7 +407,7 @@ const getToken = async (request: Request, options: DbAuthHandlerOptions) => {
   });
 
   if (!user) {
-    return Response.json({ error: "Not authenticated" }, { status: 401 });
+    return Response.json(null);
   }
 
   return Response.json(sanitizeUser(user, options.allowedUserFields));

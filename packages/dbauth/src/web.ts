@@ -42,8 +42,8 @@ export const createDbAuthClient = ({
         return null;
       }
 
-      const payload = (await response.json()) as Record<string, unknown>;
-      return JSON.stringify(payload);
+      const payload = (await response.json()) as Record<string, unknown> | null;
+      return payload ? JSON.stringify(payload) : null;
     },
     getUserMetadata: async () => {
       const response = await fetchImpl(`${authUrl}?method=getToken`, {
@@ -55,7 +55,7 @@ export const createDbAuthClient = ({
         return null;
       }
 
-      return (await response.json()) as Record<string, unknown>;
+      return (await response.json()) as Record<string, unknown> | null;
     },
     login: (options) => callAuth("login", options),
     logout: async () => {

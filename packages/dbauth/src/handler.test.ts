@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
+import { createSessionPayload, encryptSession } from "./cookie.js";
 import { handleDbAuthRequest } from "./handler.js";
 import { hashPassword } from "./password.js";
 import type { DbAuthHandlerOptions } from "./types.js";
@@ -210,6 +211,38 @@ describe("handleDbAuthRequest", () => {
 
     expect(response.status).toBe(200);
     expect(deliveredToken).not.toBe("");
+  });
+
+  describe("getToken", () => {
+    const getToken = (options: DbAuthHandlerOptions, userId?: number) =>
+      handleDbAuthRequest(
+        new Request("http://localhost/auth?method=getToken", {
+          headers: userId
+            ? {
+                cookie: `session_test=${encryptSession(createSessionPayload(userId, 60), "test-secret")}`,
+              }
+            : {},
+          method: "POST",
+        }),
+        options,
+      );
+
+    it("returns the allowed fields of the session user", async () => {
+      const response = await getToken(createOptions(), 1);
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ email: "ada@example.com", id: 1, roles: "ADMIN" });
+    });
+
+    it("answers 200 with null when logged out or the user no longer exists", async () => {
+      for (const response of [
+        await getToken(createOptions()),
+        await getToken(createOptions(), 999),
+      ]) {
+        expect(response.status).toBe(200);
+        expect(await response.json()).toBeNull();
+      }
+    });
   });
 
   it("rejects sensitive allowed user fields", async () => {

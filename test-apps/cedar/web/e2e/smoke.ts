@@ -174,12 +174,7 @@ try {
   await user.waitForURL(`${base}/posts`);
   check("back() returns to the list", true);
 
-  // dbAuth's getToken answers 401 for anonymous visitors (same as the real API), which browsers
-  // log as a failed resource load. Tolerate exactly that; anything else fails the run.
-  const anonymousAuthProbe = "Failed to load resource: the server responded with a status of 401";
-  const unexpected = consoleErrors.filter((message) => !message.startsWith(anonymousAuthProbe));
-  console.log(`info: ${consoleErrors.length - unexpected.length} anonymous getToken 401(s) logged`);
-  check("no unexpected browser console errors", unexpected.length === 0, unexpected.join("\n"));
+  check("no browser console errors", consoleErrors.length === 0, consoleErrors.join("\n"));
   await browser.close();
 } catch (error) {
   console.error(`\npreview log:\n${previewLog.slice(-3000)}`);

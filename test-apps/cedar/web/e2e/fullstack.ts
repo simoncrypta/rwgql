@@ -167,9 +167,7 @@ try {
   }
   check("signup logs the new user in and goes home", true);
 
-  const anonymousProbe = "Failed to load resource: the server responded with a status of 401";
-  const unexpected = consoleErrors.filter((message) => !message.startsWith(anonymousProbe));
-  check("no unexpected browser console errors", unexpected.length === 0, unexpected.join("\n"));
+  check("no browser console errors", consoleErrors.length === 0, consoleErrors.join("\n"));
 
   await browser.close();
 } catch (error) {

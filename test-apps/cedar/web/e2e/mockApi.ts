@@ -70,11 +70,15 @@ export const startMockApi = ({
     );
 
     if (url.pathname === "/auth") {
-      if (url.searchParams.get("method") === "getToken" && session) {
+      if (url.searchParams.get("method") === "getToken") {
         response.setHeader("content-type", "application/json");
-        response.end(JSON.stringify({ id: session.id, email: "ada@example.com", roles: "admin" }));
+        response.end(
+          JSON.stringify(
+            session ? { id: session.id, email: "ada@example.com", roles: "admin" } : null,
+          ),
+        );
       } else {
-        response.writeHead(401).end();
+        response.writeHead(400).end();
       }
       return;
     }
