@@ -1,3 +1,4 @@
+import { cedarPgDev } from "@cedarjs/pg/vite-plus";
 import { defineConfig } from "vite-plus";
 
 import { fetchDevServer } from "./fetchDevServer.ts";
@@ -16,7 +17,8 @@ export default defineConfig({
     // App fetch handler owns credentialed CORS (WEB_ORIGIN).
     cors: false,
   },
-  plugins: isTest ? [] : [fetchDevServer({ entry: "/src/app.ts" })],
+  // cedarPgDev(): @cedarjs/pg status panel on listen, with `d` (status) / `s` (Prisma Studio).
+  plugins: isTest ? [] : [fetchDevServer({ entry: "/src/app.ts" }), cedarPgDev()],
   test: {
     environment: "node",
     // Keep module state across files so `@cedarjs/pg` cloneWorkerDatabase()
