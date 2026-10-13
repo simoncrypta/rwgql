@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rwgql-rr-spike",
+  "main": "./workers/app.ts",
+  "compatibility_date": "2025-08-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "GRAPHQL_URL": "http://localhost:8999/graphql",
+  },
+}

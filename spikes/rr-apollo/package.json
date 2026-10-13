@@ -1,0 +1,31 @@
+{
+  "name": "rr-spike",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Throwaway spike (redwoodGQL-h16 step 0): React Router framework mode + vite-plus + Cloudflare + Apollo",
+  "type": "module",
+  "scripts": {
+    "mock-graphql": "node scripts/mock-graphql.mjs"
+  },
+  "dependencies": {
+    "@apollo/client": "^4.2.3",
+    "@apollo/client-integration-react-router": "0.14.5-alpha.0",
+    "graphql": "^16.14.2",
+    "isbot": "^5.1.40",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "react-router": "7.18.4",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.33.2",
+    "@cloudflare/workers-types": "4.20260426.1",
+    "@react-router/dev": "7.18.4",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "typescript": "7.0.1-rc",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.8",
+    "vite-plus": "0.2.8",
+    "wrangler": "4.85.0"
+  }
+}

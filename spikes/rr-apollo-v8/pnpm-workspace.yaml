@@ -1,0 +1,13 @@
+# Standalone pnpm root so the spike never touches the repo lockfile.
+packages: []
+overrides:
+  vite: "npm:@voidzero-dev/vite-plus-core@0.2.8"
+peerDependencyRules:
+  allowAny:
+    - vite
+    - typescript
+    - react-router
+allowBuilds:
+  esbuild: true
+  workerd: true
+  sharp: false
