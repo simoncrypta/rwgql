@@ -1,6 +1,8 @@
 packages:
   - test-apps/*
   - test-apps/cedar/*
+  - test-apps/local-testing-project/*
+  - test-apps/local-testing-project/packages/*
   - packages/*
   - tools/*
 

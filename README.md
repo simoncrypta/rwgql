@@ -88,6 +88,7 @@ writing.
 ```text
 rwgql/
 ├── test-apps/
+│   ├── local-testing-project/ # Upstream Cedar api/web migration; one Vite dev server
 │   ├── cedar/web/    # Cedar-shaped web app: React Router SSR + Apollo Client
 │   ├── graphql/      # GraphQL Yoga server (fetch handler + node:http)
 │   ├── db/           # Prisma schema, migrations, and database layer
@@ -219,6 +220,14 @@ Compared to a classic RedwoodJS GraphQL scaffold, remaining work is tracked on G
 - [Parity roadmap (Project)](https://github.com/users/simoncrypta/projects/3)
 - [Parity issues](https://github.com/simoncrypta/rwgql/issues?q=is%3Aissue+is%3Aopen+label%3Aparity)
 - [Roadmap milestones](https://github.com/simoncrypta/rwgql/milestones) — High, Medium, and Lower priority / by design
+
+## Cedar local-testing-project migration demo
+
+[`test-apps/local-testing-project`](test-apps/local-testing-project/README.md) migrates Cedar's own test app
+while keeping its `api/` and `web/` structure, services, scaffold forms, Cells, and UUID user IDs.
+Run `vp run local-testing-project#dev` for one Vite server at **http://localhost:8920**, including the API.
+It uses an app-scoped `@cedarjs/pg` database and independently deployable React Router web / Node API builds.
+Prisma commands work through `vp run local-testing-project#prisma <command>`.
 
 ## Migrating from RedwoodJS
 

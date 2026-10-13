@@ -7,6 +7,15 @@ export default defineConfig({
   },
   fmt: {
     ignorePatterns: [
+      "test-apps/local-testing-project/api/db/generated/**",
+      "test-apps/local-testing-project/api/types/graphql.d.ts",
+      "test-apps/local-testing-project/api/schema.graphql",
+      "test-apps/local-testing-project/api/src/*.gen.ts",
+      "test-apps/local-testing-project/web/types/graphql.d.ts",
+      "test-apps/local-testing-project/web/src/*.gen.ts",
+      "test-apps/local-testing-project/web/.rwgql/**",
+      "test-apps/local-testing-project/web/.react-router/**",
+      "test-apps/local-testing-project/web/build/**",
       "test-apps/graphql/types/graphql.d.ts",
       "test-apps/graphql/schema.graphql",
       "test-apps/graphql/src/**/*.gen.ts",
@@ -18,6 +27,16 @@ export default defineConfig({
   lint: {
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
     rules: { "vite-plus/prefer-vite-plus-imports": "error" },
+    ignorePatterns: [
+      "test-apps/local-testing-project/api/db/generated/**",
+      "test-apps/local-testing-project/api/src/*.gen.ts",
+      "test-apps/local-testing-project/api/types/graphql.d.ts",
+      "test-apps/local-testing-project/web/types/graphql.d.ts",
+      "test-apps/local-testing-project/web/src/*.gen.ts",
+      "test-apps/local-testing-project/web/.rwgql/**",
+      "test-apps/local-testing-project/web/.react-router/**",
+      "test-apps/local-testing-project/web/build/**",
+    ],
     options: { typeAware: true, typeCheck: true },
     overrides: [
       {
@@ -28,7 +47,15 @@ export default defineConfig({
   },
   test: {
     exclude: [...configDefaults.exclude],
-    projects: ["packages/*", "test-apps/db", "test-apps/graphql", "test-apps/cedar/web"],
+    projects: [
+      "packages/*",
+      "test-apps/db",
+      "test-apps/graphql",
+      "test-apps/cedar/web",
+      "test-apps/local-testing-project/api",
+      "test-apps/local-testing-project/web",
+      "test-apps/local-testing-project/packages/validators",
+    ],
   },
   run: {
     cache: true,

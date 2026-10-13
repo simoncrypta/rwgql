@@ -1,0 +1,12 @@
+api/.env
+api/db/generated/
+api/schema.graphql
+api/types/graphql.d.ts
+api/src/*.gen.ts
+web/types/graphql.d.ts
+web/src/routeDefinitions.gen.ts
+web/.rwgql/
+web/.react-router/
+web/build/
+.cedarpg/
+.prisma-shadow/

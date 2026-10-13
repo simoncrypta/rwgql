@@ -1,0 +1,37 @@
+{
+  "name": "local-testing-api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#db-client": "./db/generated/client/index.js"
+  },
+  "scripts": {
+    "start": "node dist/server.mjs"
+  },
+  "dependencies": {
+    "@my-org/validators": "workspace:*",
+    "@prisma/client": "^6.19.0",
+    "@rwgql/auth": "workspace:*",
+    "@rwgql/dbauth": "workspace:*",
+    "@rwgql/graphql-typegen": "workspace:*",
+    "@rwgql/log-formatter": "workspace:*",
+    "dotenv": "^16.6.1",
+    "graphql": "^16.14.2",
+    "graphql-tag": "2.12.7",
+    "graphql-yoga": "^5.21.2"
+  },
+  "devDependencies": {
+    "@cedarjs/pg": "0.3.0",
+    "@graphql-codegen/cli": "^5.0.7",
+    "@graphql-codegen/typescript": "^4.1.6",
+    "@graphql-codegen/typescript-operations": "^4.6.1",
+    "@graphql-codegen/typescript-resolvers": "^4.5.2",
+    "@types/node": "^25.6.2",
+    "prisma": "^6.19.0",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}
