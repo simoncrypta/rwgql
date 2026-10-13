@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "@rwgql/dbauth": "workspace:*",
+    "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
     "db": "workspace:*",
     "tsx": "catalog:",
