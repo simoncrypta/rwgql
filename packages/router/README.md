@@ -1,6 +1,6 @@
 # @rwgql/router
 
-Cedar-compatible routing for RedwoodGQL. You write Cedar's `src/Routes.tsx`, and it is compiled to
+Cedar-compatible routing for rwgql. You write Cedar's `src/Routes.tsx`, and it is compiled to
 [React Router](https://reactrouter.com) framework-mode route modules. App code keeps Cedar's API:
 `routes`, `Link`, `NavLink`, `navigate`, `back`, `useParams`, `useMatch`, `useBlocker`, `Redirect`.
 

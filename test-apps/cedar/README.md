@@ -1,7 +1,7 @@
 # Cedar-shaped test app (React Router + Apollo)
 
 This app is laid out like a [Cedar](https://github.com/cedarjs/cedar) project so it can show that a
-Cedar web side runs on RedwoodGQL with few changes. Its routes, pages, layouts, and Cells are ported from
+Cedar web side runs on rwgql with few changes. Its routes, pages, layouts, and Cells are ported from
 Cedar's `__fixtures__/test-project`.
 
 | Cedar                                      | Here                                                   |

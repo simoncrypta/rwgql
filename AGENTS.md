@@ -2,9 +2,9 @@ You can find doc for @redwoodjs/ packages online at https://cedarjs.com/docs/8.x
 React Router (framework mode) online at https://reactrouter.com/ and for Apollo's React Router integration at
 https://www.apollographql.com/docs/react/integrations/react-router
 
-## RedwoodGQL Direction
+## rwgql Direction
 
-RedwoodGQL is an early proof of concept for a new RedwoodJS GraphQL path that can migrate block by block from a classic
+rwgql is an early proof of concept for a new RedwoodJS GraphQL path that can migrate block by block from a classic
 RedwoodJS (Cedar) app.
 
 - Use `README.md` as the source of truth for product direction, architecture, package intent, and parity goals.
@@ -15,7 +15,7 @@ RedwoodJS (Cedar) app.
   Apollo Client, `@rwgql/router` should require only React Router (plus Babel for codegen), and
   `@cedarjs/pg` should work anywhere Vite Task / Vitest is available. App-local Prisma glue (prepare `.env`,
   migrate/generate tasks, Vitest migrate hook) lives in the db / graphql test apps — not a second Postgres layer.
-- Use [migrating-from-redwoodjs.md](migrating-from-redwoodjs.md) and GitHub parity issues for Cedar → RedwoodGQL
+- Use [migrating-from-redwoodjs.md](migrating-from-redwoodjs.md) and GitHub parity issues for Cedar → rwgql
   migration guidance; do not recreate a full classic Redwood app in-tree unless the task is explicitly about parity.
 
 <!--VITE PLUS START-->

@@ -1,14 +1,14 @@
-# RedwoodGQL
+# rwgql
 
-A proof of concept to carry forward the legacy of **RedwoodJS GraphQL Bighorn Epoch** — now **RedwoodGQL**.
+A proof of concept to carry forward the legacy of **RedwoodJS GraphQL Bighorn Epoch** — now **rwgql**.
 
-RedwoodGQL is a [Vite+](https://viteplus.dev/guide/) monorepo that pairs a Cedar-compatible web side on
+rwgql is a [Vite+](https://viteplus.dev/guide/) monorepo that pairs a Cedar-compatible web side on
 **React Router** (framework mode, SSR on Cloudflare Workers) and **Apollo Client** with a **GraphQL Yoga** server on
 **Node `http`**. The goal is a set of reusable packages that bring back
 what people loved about Redwood — Cells, pluggable auth, a preconfigured GraphQL server, Prisma ORM — without the
 baggage that slowed RedwoodJS GraphQL down.
 
-RedwoodGQL is not a framework. It is a **"framework"** — the same stance RedwoodSDK takes.
+rwgql is not a framework. It is a **"framework"** — the same stance RedwoodSDK takes.
 
 RedwoodSDK resisted calling itself a framework for a long time. It was described as a toolkit, or more precisely an SDK,
 because most of the heavy lifting should come from the browser and the network, not a JavaScript runtime pretending to
@@ -17,7 +17,7 @@ be the platform.
 RedwoodSDK embraces web-native primitives, minimizes abstraction, and gives you full control over the code you write. It
 is idiomatic to JavaScript and aligned with the platform.
 
-Over time, the term "framework" was adopted for clarity and discoverability. At its core, RedwoodGQL inherits the same
+Over time, the term "framework" was adopted for clarity and discoverability. At its core, rwgql inherits the same
 idea: a lightweight, composable set of tools that stays out of your way.
 
 ## Quick Start
@@ -31,13 +31,13 @@ curl -fsSL https://vite.plus | bash
 Then:
 
 ```bash
-git clone https://github.com/simoncrypta/redwoodGQL.git && cd redwoodGQL && ./quickstart.sh
+git clone https://github.com/simoncrypta/rwgql.git && cd rwgql && ./quickstart.sh
 ```
 
 Requires macOS/Linux. Validates Node.js (>= 22.18.0), installs dependencies, and starts dev. See
 [Getting Started](#getting-started) for details.
 
-## What RedwoodGQL Brings Back
+## What rwgql Brings Back
 
 - **Cells** — declarative data-fetching components built on Apollo Client (`@rwgql/cell`)
 - **Pluggable auth** — directive-based auth on the GraphQL server (`requireAuth`, `skipAuth`)
@@ -45,9 +45,9 @@ Requires macOS/Linux. Validates Node.js (>= 22.18.0), installs dependencies, and
 - **Prisma ORM** — PostgreSQL data layer with a clear migration story
 - **Monorepo ergonomics** — shared packages, one toolchain, parallel dev servers
 
-## What RedwoodGQL Leaves Behind
+## What rwgql Leaves Behind
 
-Classic RedwoodJS GraphQL carried constraints that blocked progress. RedwoodGQL removes them by design:
+Classic RedwoodJS GraphQL carried constraints that blocked progress. rwgql removes them by design:
 
 | Removed                       | Replaced with                        |
 | ----------------------------- | ------------------------------------ |
@@ -58,7 +58,7 @@ Classic RedwoodJS GraphQL carried constraints that blocked progress. RedwoodGQL 
 
 ## Design Principles
 
-These principles come from RedwoodSDK and drive every architectural decision in RedwoodGQL.
+These principles come from RedwoodSDK and drive every architectural decision in rwgql.
 
 ### 1. Zero Magic
 
@@ -80,13 +80,13 @@ Built for the web as it exists today. Uses native Web APIs. No abstraction over 
 ### Why This Matters
 
 Stay close to the platform. Minimize abstraction, reduce complexity, remove hidden behavior, and make code easier to
-understand and maintain. RedwoodGQL is not just about writing software — it is about understanding the software you are
+understand and maintain. rwgql is not just about writing software — it is about understanding the software you are
 writing.
 
 ## Architecture
 
 ```text
-redwoodGQL/
+rwgql/
 ├── test-apps/
 │   ├── cedar/web/    # Cedar-shaped web app: React Router SSR + Apollo Client
 │   ├── graphql/      # GraphQL Yoga server (fetch handler + node:http)
@@ -189,7 +189,7 @@ vp check
 
 ## Status
 
-RedwoodGQL is an early proof of concept. The demo app runs end-to-end locally; APIs and layout
+rwgql is an early proof of concept. The demo app runs end-to-end locally; APIs and layout
 may still change.
 
 ### Working today
@@ -217,8 +217,8 @@ Auth and scaffold routes (Posts, Contacts) use Cells. See `packages/router/READM
 Compared to a classic RedwoodJS GraphQL scaffold, remaining work is tracked on GitHub:
 
 - [Parity roadmap (Project)](https://github.com/users/simoncrypta/projects/3)
-- [Parity issues](https://github.com/simoncrypta/redwoodGQL/issues?q=is%3Aissue+is%3Aopen+label%3Aparity)
-- [Roadmap milestones](https://github.com/simoncrypta/redwoodGQL/milestones) — High, Medium, and Lower priority / by design
+- [Parity issues](https://github.com/simoncrypta/rwgql/issues?q=is%3Aissue+is%3Aopen+label%3Aparity)
+- [Roadmap milestones](https://github.com/simoncrypta/rwgql/milestones) — High, Medium, and Lower priority / by design
 
 ## Migrating from RedwoodJS
 

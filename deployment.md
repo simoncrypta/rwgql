@@ -1,6 +1,6 @@
 # Production deployment
 
-RedwoodGQL production uses **Cloudflare Workers** for the web app and **Render** for the GraphQL API and PostgreSQL database.
+rwgql production uses **Cloudflare Workers** for the web app and **Render** for the GraphQL API and PostgreSQL database.
 
 ```text
 Browser → Cloudflare Worker (test-apps/cedar/web, React Router SSR)

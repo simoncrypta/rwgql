@@ -1,6 +1,6 @@
-# Migrating a RedwoodJS (Cedar) app to RedwoodGQL
+# Migrating a RedwoodJS (Cedar) app to rwgql
 
-This guide walks through migrating a classic RedwoodJS GraphQL (Cedar) app to RedwoodGQL: `@rwgql/*`
+This guide walks through migrating a classic RedwoodJS GraphQL (Cedar) app to rwgql: `@rwgql/*`
 packages, a Cedar-compatible web side on [React Router](https://reactrouter.com/) + Apollo Client, and the
 [Vite+](https://viteplus.dev/guide/) toolchain.
 
@@ -11,12 +11,12 @@ demo in [`test-apps/`](test-apps/) in this repository.
 
 ### Target architecture
 
-RedwoodJS splits an app into two yarn workspaces, `web/` and `api/`. RedwoodGQL splits it into three pnpm workspace
+RedwoodJS splits an app into two yarn workspaces, `web/` and `api/`. rwgql splits it into three pnpm workspace
 packages, each independently runnable:
 
 ```text
-RedwoodJS (Cedar)                RedwoodGQL
-─────────────────                ──────────
+RedwoodJS (Cedar)                rwgql
+─────────────────                ─────
 web/                             test-apps/cedar/web/  Cedar-shaped web side: React Router SSR on a Worker + Apollo Client
 api/  (functions, graphql,      test-apps/graphql/    GraphQL Yoga on node:http, SDL + services + directives
        services, directives)    test-apps/db/         Prisma schema, migrations, client — its own package
@@ -31,7 +31,7 @@ api/db/ (Prisma)
 
 ### Features that are dropped by design
 
-RedwoodGQL deliberately does not replace everything. Before migrating, know what goes away:
+rwgql deliberately does not replace everything. Before migrating, know what goes away:
 
 | RedwoodJS feature                                             | Status                                                                   |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -79,7 +79,7 @@ From here on, run `vp install` instead of `yarn install`, and `vp check` / `vp t
 
 ## 3. Move the database to its own package
 
-In RedwoodJS, Prisma lives under `api/db/` and the client under `api/src/lib/db.ts`. In RedwoodGQL it becomes a
+In RedwoodJS, Prisma lives under `api/db/` and the client under `api/src/lib/db.ts`. In rwgql it becomes a
 standalone `db` workspace package that both the GraphQL server and scripts import.
 
 1. Create `test-apps/db/` and move `schema.prisma` + `migrations/` into `test-apps/db/prisma/`.
@@ -148,7 +148,7 @@ export const handler = createGraphQLHandler({
 });
 ```
 
-RedwoodGQL replaces it with GraphQL Yoga on Node `http` (Vite+ `vp dev` via a thin fetch middleware), and replaces the glob imports with a
+rwgql replaces it with GraphQL Yoga on Node `http` (Vite+ `vp dev` via a thin fetch middleware), and replaces the glob imports with a
 generated, checked-in schema registry from `@rwgql/graphql-typegen`.
 
 1. Create `test-apps/graphql/` and move `api/src/graphql/*.sdl.ts`, `api/src/services/*`, and `api/src/directives/*` into
@@ -187,7 +187,7 @@ generated, checked-in schema registry from `@rwgql/graphql-typegen`.
    `Request`/`Response` — no framework HTTP layer. Lean operation logs can stay as a Yoga plugin writing to `console`.
 
 5. Update service resolver types. Redwood generated `QueryResolvers` / `MutationResolvers` types via
-   `yarn rw g types`; RedwoodGQL generates the same names from the exported SDL via graphql-codegen (the `codegen`
+   `yarn rw g types`; rwgql generates the same names from the exported SDL via graphql-codegen (the `codegen`
    task) and wraps them in `ServiceResolver` so services stay plain functions callable from tests:
 
    ```ts
@@ -468,7 +468,7 @@ const HomePage = () => {
 
 ### Forms
 
-`@redwoodjs/forms` was a wrapper over react-hook-form. RedwoodGQL uses react-hook-form directly plus a small
+`@redwoodjs/forms` was a wrapper over react-hook-form. rwgql uses react-hook-form directly plus a small
 app-local shim that recreates the familiar components — copy
 [`test-apps/cedar/web/src/lib/forms.tsx`](test-apps/cedar/web/src/lib/forms.tsx) into your app. It provides `Form`,
 `Label`, `TextField`, `TextAreaField`, `NumberField`, `PasswordField`, `Submit`, `FieldError`, `FormError`, and the
@@ -488,7 +488,7 @@ diff it against `web/src/pages/ContactUsPage/ContactUsPage.tsx`.
 
 ## 9. Web typegen
 
-Redwood generated `types/graphql` from a `graphql.config.js` project file plus the global `gql` tag. RedwoodGQL uses
+Redwood generated `types/graphql` from a `graphql.config.js` project file plus the global `gql` tag. rwgql uses
 standard GraphQL Code Generator with the client preset:
 
 1. The GraphQL app exports its schema to `schema.graphql` (the `export-schema` task), and
