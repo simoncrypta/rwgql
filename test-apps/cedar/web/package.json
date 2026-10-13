@@ -1,0 +1,48 @@
+{
+  "name": "cedar-web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cedar-shaped web side on React Router framework mode + Apollo (no RedwoodSDK)",
+  "type": "module",
+  "scripts": {
+    "test": "vp test"
+  },
+  "dependencies": {
+    "@apollo/client": "^4.2.3",
+    "@apollo/client-integration-react-router": "0.14.5-alpha.0",
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "@rwgql/auth": "workspace:*",
+    "@rwgql/cell": "workspace:*",
+    "@rwgql/dbauth": "workspace:*",
+    "@rwgql/router": "workspace:*",
+    "graphql": "^16.14.2",
+    "humanize-string": "2.1.0",
+    "isbot": "^5.1.40",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "react-hook-form": "^7.66.0",
+    "react-hot-toast": "^2.6.0",
+    "react-router": "7.18.4",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.33.2",
+    "@cloudflare/workers-types": "4.20260426.1",
+    "@react-router/dev": "7.18.4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "~25.6.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitest/browser-playwright": "catalog:",
+    "autoprefixer": "^10.4.21",
+    "playwright": "^1.55.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "wrangler": "4.85.0"
+  }
+}

@@ -3,22 +3,27 @@ import { clientScalars, createRedwoodResolverGenerateEntry } from "@rwgql/graphq
 
 const schemaPath = "./schema.graphql";
 
+const clientOutput = (webRoot: string) => ({
+  [`${webRoot}/src/gql/`]: {
+    documents: [`${webRoot}/src/components/**/*.{ts,tsx}`, `${webRoot}/src/pages/**/*.{ts,tsx}`],
+    preset: "client" as const,
+    presetConfig: {
+      fragmentMasking: { unmaskFunctionName: "getFragmentData" },
+    },
+    config: {
+      useTypeImports: true,
+      enumsAsTypes: true,
+      scalars: clientScalars,
+    },
+  },
+});
+
 const config: CodegenConfig = {
   schema: schemaPath,
-  documents: ["../web/src/components/**/*.{ts,tsx}", "../web/src/pages/**/*.{ts,tsx}"],
   ignoreNoDocuments: true,
   generates: {
-    "../web/src/gql/": {
-      preset: "client",
-      presetConfig: {
-        fragmentMasking: { unmaskFunctionName: "getFragmentData" },
-      },
-      config: {
-        useTypeImports: true,
-        enumsAsTypes: true,
-        scalars: clientScalars,
-      },
-    },
+    ...clientOutput("../rwsdk/web"),
+    ...clientOutput("../cedar/web"),
     ...createRedwoodResolverGenerateEntry(),
   },
 };

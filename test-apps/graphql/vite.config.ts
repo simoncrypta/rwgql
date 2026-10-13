@@ -78,11 +78,17 @@ export default defineConfig({
         input: [
           "codegen.ts",
           "schema.graphql",
-          { pattern: "test-apps/web/src/components/**/*.{ts,tsx}", base: "workspace" },
-          { pattern: "test-apps/web/src/pages/**/*.{ts,tsx}", base: "workspace" },
+          { pattern: "test-apps/rwsdk/web/src/components/**/*.{ts,tsx}", base: "workspace" },
+          { pattern: "test-apps/rwsdk/web/src/pages/**/*.{ts,tsx}", base: "workspace" },
+          { pattern: "test-apps/cedar/web/src/components/**/*.{ts,tsx}", base: "workspace" },
+          { pattern: "test-apps/cedar/web/src/pages/**/*.{ts,tsx}", base: "workspace" },
           { pattern: "packages/graphql-typegen/src/**/*.ts", base: "workspace" },
         ],
-        output: [{ pattern: "test-apps/web/src/gql/**", base: "workspace" }, "types/graphql.d.ts"],
+        output: [
+          { pattern: "test-apps/rwsdk/web/src/gql/**", base: "workspace" },
+          { pattern: "test-apps/cedar/web/src/gql/**", base: "workspace" },
+          "types/graphql.d.ts",
+        ],
       },
       "export-schema": {
         command: "tsx scripts/export-schema.ts",

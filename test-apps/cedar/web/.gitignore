@@ -1,0 +1,14 @@
+node_modules
+dist
+build
+.env
+.dev.vars
+.wrangler
+*.tsbuildinfo
+
+# React Router typegen
+.react-router/
+
+# Generated from src/Routes.tsx by @rwgql/router (React Router appDirectory)
+.rwgql/
+src/*.gen.ts

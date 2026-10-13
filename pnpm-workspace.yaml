@@ -1,5 +1,7 @@
 packages:
   - test-apps/*
+  - test-apps/cedar/*
+  - test-apps/rwsdk/*
   - packages/*
   - tools/*
 
@@ -9,10 +11,10 @@ catalog:
   "@types/node": ^24
   tsx: ^4.20.5
   typescript: 7.0.1-rc
-  vite: npm:@voidzero-dev/vite-plus-core@latest
+  vite: npm:@voidzero-dev/vite-plus-core@0.2.8
   vitest: 4.1.9
   "@vitest/browser-playwright": 4.1.9
-  vite-plus: latest
+  vite-plus: 0.2.8
   "@typescript/native-preview": 7.0.0-dev.20260707.2
 overrides:
   vite: "catalog:"
@@ -38,4 +40,3 @@ allowBuilds:
   workerd: true
 minimumReleaseAgeExclude:
   - rwsdk@1.5.0
-  - "@cedarjs/pg@0.2.0-alpha.0"
