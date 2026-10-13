@@ -1,7 +1,7 @@
-const REDWOOD_PARAM = /\{([a-zA-Z_][a-zA-Z0-9_]*)(?::[^}]+)?\}/g;
+import { parseRoutePath } from "./routeParams.js";
 
-export const normalizeRedwoodPath = (path: string): string =>
-  path.replace(REDWOOD_PARAM, (_match, paramName: string) => `:${paramName}`);
+/** Cedar path → colon/splat pattern (`/posts/{id:Int}` → `/posts/:id`, `{path...}` → `*`). */
+export const normalizeRedwoodPath = (path: string): string => parseRoutePath(path).path;
 
 /** Normalize URL pathnames for stable comparisons (e.g. NavLink active state). */
 export const normalizePathname = (pathname: string): string => {

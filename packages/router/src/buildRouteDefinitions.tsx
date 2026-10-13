@@ -9,7 +9,7 @@ import type { RequestInfo } from "rwsdk/worker";
 
 import type { RouteDefinition } from "./compileRoutes.js";
 import { resolveRouteCacheControl } from "./cacheControl.js";
-import { normalizeRedwoodPath } from "./normalizePath.js";
+import { parseRoutePath } from "./routeParams.js";
 import {
   Private,
   Route,
@@ -61,6 +61,7 @@ const resolveRouteDefinition = <T extends RequestInfo>(
       name: props.name ?? "notFound",
       page: props.page,
       path: "/*",
+      params: {},
       private: isPrivate,
       render: props.render,
       unauthenticated: context.unauthenticated,
@@ -86,7 +87,7 @@ const resolveRouteDefinition = <T extends RequestInfo>(
     layoutWrapper: context.layoutWrapper,
     name: props.name,
     page: props.page,
-    path: normalizeRedwoodPath(props.path),
+    ...parseRoutePath(props.path),
     private: isPrivate,
     render: props.render,
     unauthenticated: context.unauthenticated,

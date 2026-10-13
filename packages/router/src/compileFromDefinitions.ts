@@ -9,7 +9,6 @@ import { createRequireAuth } from "./createRequireAuth.js";
 export type CompileRoutesOptions<T extends RequestInfo = RequestInfo> = {
   readonly isAuthenticated: (requestInfo: T) => boolean;
   readonly loginPath?: string;
-  readonly parseRouteId?: (requestInfo: T) => number;
   readonly renderPage: (requestInfo: T, children: ReactNode) => Response | Promise<Response>;
 };
 
@@ -72,7 +71,6 @@ export const compileFromDefinitions = <T extends RequestInfo = RequestInfo>(
   const definitionsWithAuth = attachAuthMiddleware(definitions, routes, options);
 
   return compileRoutes(definitionsWithAuth, {
-    parseRouteId: options.parseRouteId,
     renderPage: options.renderPage,
     routes,
   });

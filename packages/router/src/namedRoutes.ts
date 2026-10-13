@@ -1,19 +1,14 @@
-import { buildPath, type NamedRoutesFrom, type RouteParams } from "./buildPath.js";
+import {
+  buildPath,
+  type NamedRoutesFrom,
+  type QueryParams,
+  type RouteDefinitionEntry,
+} from "./buildPath.js";
 
-const createNamedRoute = <P extends string>(path: P) => {
-  if (path.includes(":id")) {
-    return (params: RouteParams) => buildPath(path, params);
-  }
-
-  return () => buildPath(path);
-};
-
-export const createNamedRoutes = <
-  const T extends readonly { readonly name: string; readonly path: string }[],
->(
+export const createNamedRoutes = <const T extends readonly RouteDefinitionEntry[]>(
   definitions: T,
 ): NamedRoutesFrom<T> => {
   return Object.fromEntries(
-    definitions.map((entry) => [entry.name, createNamedRoute(entry.path)]),
+    definitions.map((entry) => [entry.name, (params?: QueryParams) => buildPath(entry, params)]),
   ) as NamedRoutesFrom<T>;
 };

@@ -2,8 +2,8 @@ import type { ComponentType, ReactNode } from "react";
 import { route, type Route, type RouteMiddleware } from "rwsdk/router";
 import type { RequestInfo } from "rwsdk/worker";
 
-import { pathHasRouteId } from "./buildPath.js";
 import type { NamedRoutes } from "./buildPath.js";
+import { parseRouteParams, type ParamTypes } from "./routeParams.js";
 import { createCacheControl } from "./createCacheControl.js";
 import type { LayoutWrapper } from "./withLayout.js";
 
@@ -11,6 +11,7 @@ export type RouteDefinition<T extends RequestInfo = RequestInfo> = {
   readonly cacheControl?: string;
   readonly name: string;
   readonly path: string;
+  readonly params?: ParamTypes;
   readonly layoutWrapper?: LayoutWrapper;
   readonly private?: boolean;
   readonly unauthenticated?: string;
@@ -21,7 +22,6 @@ export type RouteDefinition<T extends RequestInfo = RequestInfo> = {
 };
 
 export type CompileRoutesOptions<T extends RequestInfo = RequestInfo> = {
-  readonly parseRouteId?: (requestInfo: T) => number;
   readonly renderPage: (requestInfo: T, children: ReactNode) => Response | Promise<Response>;
   readonly routes: NamedRoutes;
 };
@@ -31,34 +31,35 @@ export type CompiledRoutes<T extends RequestInfo = RequestInfo> = {
   readonly workerRoutes: Route<T>[];
 };
 
+const NO_MATCH = Symbol("rwgql.noMatch");
+
 const identityLayout: LayoutWrapper = (children) => children;
+
+// RWSDK names the trailing wildcard `$0`.
+const RWSDK_SPLAT_KEY = "$0";
+
+const notFound = () => new Response("Not Found", { status: 404 });
 
 const resolvePageProps = <T extends RequestInfo>(
   entry: RouteDefinition<T>,
-  parseRouteId?: (requestInfo: T) => number,
-): ((requestInfo: T) => Record<string, unknown>) | undefined => {
+  requestInfo: T,
+): Record<string, unknown> | undefined => {
   if (entry.pageProps) {
-    return entry.pageProps;
+    return entry.pageProps(requestInfo);
   }
 
-  if (!entry.page || !pathHasRouteId(entry.path)) {
-    return undefined;
+  if (!entry.params || Object.keys(entry.params).length === 0) {
+    return {};
   }
 
-  if (!parseRouteId) {
-    throw new Error(
-      `@rwgql/router: route "${entry.name}" (${entry.path}) requires parseRouteId in compile options`,
-    );
-  }
-
-  return (requestInfo) => ({ id: parseRouteId(requestInfo) });
+  // Cedar typed params: a value that does not match its type means the route does not match.
+  return parseRouteParams(entry.params, requestInfo.params, { splatKey: RWSDK_SPLAT_KEY });
 };
 
 const renderRoutePage = <T extends RequestInfo>(
   entry: RouteDefinition<T>,
   requestInfo: T,
-  parseRouteId?: (requestInfo: T) => number,
-): ReactNode => {
+): ReactNode | typeof NO_MATCH => {
   if (entry.render) {
     return entry.render(requestInfo);
   }
@@ -67,8 +68,12 @@ const renderRoutePage = <T extends RequestInfo>(
     throw new Error(`@rwgql/router: route "${entry.name}" is missing page or render`);
   }
 
+  const pageProps = resolvePageProps(entry, requestInfo);
+  if (!pageProps) {
+    return NO_MATCH;
+  }
+
   const Page = entry.page;
-  const pageProps = resolvePageProps(entry, parseRouteId)?.(requestInfo) ?? {};
 
   return <Page {...pageProps} />;
 };
@@ -81,12 +86,6 @@ export const compileRoutes = <
   options: CompileRoutesOptions<T>,
 ): CompiledRoutes<T> => {
   for (const entry of definitions) {
-    if (entry.page && pathHasRouteId(entry.path) && !entry.pageProps && !options.parseRouteId) {
-      throw new Error(
-        `@rwgql/router: route "${entry.name}" (${entry.path}) requires parseRouteId in compile options`,
-      );
-    }
-
     if (entry.private && !entry.requireAuth) {
       throw new Error(`@rwgql/router: private route "${entry.name}" requires requireAuth`);
     }
@@ -96,7 +95,11 @@ export const compileRoutes = <
     const layout = entry.layoutWrapper ?? identityLayout;
 
     const handler = (requestInfo: T) => {
-      const page = renderRoutePage(entry, requestInfo, options.parseRouteId);
+      const page = renderRoutePage(entry, requestInfo);
+      if (page === NO_MATCH) {
+        return notFound();
+      }
+
       const wrapped = layout(page, requestInfo);
       return options.renderPage(requestInfo, wrapped);
     };

@@ -7,7 +7,7 @@ import {
 } from "react";
 import type { RequestInfo } from "rwsdk/worker";
 
-import { normalizeRedwoodPath } from "./normalizePath.js";
+import { parseRoutePath, type ParamTypes } from "./routeParams.js";
 import type { CacheOption } from "./cacheControl.js";
 
 export type RouteRender<T extends RequestInfo = RequestInfo> = (requestInfo: T) => ReactNode;
@@ -63,6 +63,7 @@ export const routeNamesFromTree = (tree: ReactNode) => {
   const names: Array<{
     name: string;
     path: string;
+    params: ParamTypes;
     private?: boolean;
     unauthenticated?: string;
   }> = [];
@@ -95,6 +96,7 @@ export const routeNamesFromTree = (tree: ReactNode) => {
         names.push({
           name: props.name ?? "notFound",
           path: "/*",
+          params: {},
           private: props.private ?? context.private,
           unauthenticated: context.unauthenticated,
         });
@@ -107,7 +109,7 @@ export const routeNamesFromTree = (tree: ReactNode) => {
 
       names.push({
         name: props.name,
-        path: normalizeRedwoodPath(props.path),
+        ...parseRoutePath(props.path),
         private: props.private ?? context.private,
         unauthenticated: context.unauthenticated,
       });

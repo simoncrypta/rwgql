@@ -27,7 +27,6 @@ describe("withWorkerCompile", () => {
     const renderPage = vi.fn((_requestInfo, children) => new Response(String(children)));
     const { routes: compiledRoutes, workerRoutes } = appRoutes.compile({
       isAuthenticated: () => false,
-      parseRouteId: () => 2,
       renderPage,
     });
 

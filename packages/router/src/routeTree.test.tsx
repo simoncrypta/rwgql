@@ -17,9 +17,15 @@ describe("routeNamesFromTree", () => {
     );
 
     expect(names).toEqual([
-      { name: "login", path: "/login" },
-      { name: "contact", path: "/contacts/:id", private: true, unauthenticated: "login" },
-      { name: "notFound", path: "/*" },
+      { name: "login", path: "/login", params: {} },
+      {
+        name: "contact",
+        path: "/contacts/:id",
+        params: { id: "Int" },
+        private: true,
+        unauthenticated: "login",
+      },
+      { name: "notFound", path: "/*", params: {} },
     ]);
   });
 });

@@ -9,6 +9,10 @@ describe("normalizeRedwoodPath", () => {
     expect(normalizeRedwoodPath("/waterfall/{id}")).toBe("/waterfall/:id");
   });
 
+  it("converts a trailing glob to a splat", () => {
+    expect(normalizeRedwoodPath("/docs/{path...}")).toBe("/docs/*");
+  });
+
   it("leaves static paths unchanged", () => {
     expect(normalizeRedwoodPath("/about")).toBe("/about");
   });
