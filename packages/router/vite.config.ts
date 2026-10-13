@@ -4,6 +4,9 @@ export default defineConfig({
   pack: {
     entry: [
       "src/index.ts",
+      "src/rwsdk.ts",
+      "src/server.ts",
+      "src/vite.ts",
       "src/routes.ts",
       "src/worker.ts",
       "src/codegen/index.ts",
@@ -20,10 +23,14 @@ export default defineConfig({
     setupFiles: ["src/test/setup.ts"],
   },
   lint: {
+    // Verbatim third-party fixtures stay byte-for-byte as upstream.
+    ignorePatterns: ["src/**/__fixtures__/**"],
     options: {
       typeAware: true,
       typeCheck: true,
     },
   },
-  fmt: {},
+  fmt: {
+    ignorePatterns: ["src/**/__fixtures__/**"],
+  },
 });

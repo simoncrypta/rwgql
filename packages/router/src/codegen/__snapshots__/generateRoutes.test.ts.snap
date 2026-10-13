@@ -1,0 +1,177 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generateRoutes (React Router) > emits a stable app directory (golden) 1`] = `
+{
+  "entry.client.tsx": "// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
+import "../src/entry.client";
+",
+  "entry.server.tsx": "// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
+export * from "../src/entry.server";
+export { default } from "../src/entry.server";
+",
+  "root.tsx": "// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
+import type { ComponentType, ReactNode } from "react";
+import { isRouteErrorResponse, Outlet } from "react-router";
+import { NavigationBridge, registerRoutes } from "@rwgql/router";
+
+import { routeDefinitions } from "../src/routeDefinitions.gen";
+import App from "../src/App";
+import { Document } from "../src/Document";
+import NotFoundPage from "../src/pages/NotFoundPage/NotFoundPage";
+
+registerRoutes(routeDefinitions);
+
+export function Layout({ children }: { readonly children: ReactNode }) {
+  return <Document>{children}</Document>;
+}
+
+export default function Root() {
+  return (
+    <App>
+      <NavigationBridge />
+      <Outlet />
+    </App>
+  );
+}
+
+export function ErrorBoundary({ error }: { readonly error: unknown }) {
+  if (isRouteErrorResponse(error) && error.status === 404) {
+    return <NotFoundPage />;
+  }
+
+  return <h1>{isRouteErrorResponse(error) ? \`\${error.status} \${error.statusText}\` : "Something went wrong"}</h1>;
+}
+",
+  "routes.ts": "// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
+
+import { type RouteConfig, index, layout, route } from "@react-router/dev/routes";
+
+export default [
+  route("login", "routes/login.tsx", { id: "login" }),
+  layout("sets/set-0.tsx", [
+    index("routes/home.tsx", { id: "home" }),
+    route("posts/:id", "routes/post.tsx", { id: "post" }),
+    route("old", "routes/old.tsx", { id: "old" }),
+    layout("sets/set-1.tsx", [
+      route("admin", "routes/admin.tsx", { id: "admin" }),
+    ]),
+    route("*", "routes/notFound.tsx", { id: "notFound" }),
+  ]),
+] satisfies RouteConfig;
+",
+  "routes/admin.tsx": "// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
+
+
+export { default } from "../../src/pages/AdminPage/AdminPage";
+",
+  "routes/home.tsx": "// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
+
+
+export const headers = () => ({ "Cache-Control": "public, max-age=60, stale-while-revalidate=300" });
+
+export { meta } from "../../src/pages/HomePage/HomePage";
+
+export { default } from "../../src/pages/HomePage/HomePage";
+",
+  "routes/login.tsx": "// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
+
+
+export { default } from "../../src/pages/LoginPage/LoginPage";
+",
+  "routes/notFound.tsx": "// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
+
+import { data } from "react-router";
+
+export const loader = () => data(null, { status: 404 });
+
+export const headers = () => ({ "Cache-Control": "public, max-age=60, stale-while-revalidate=300" });
+
+export { default } from "../../src/pages/NotFoundPage/NotFoundPage";
+",
+  "routes/old.tsx": "// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
+
+import { redirect } from "react-router";
+
+export const loader = () => redirect("/");
+
+export default function Redirect() {
+  return null;
+}
+",
+  "routes/post.tsx": "// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
+
+import { data, type LoaderFunctionArgs, useParams } from "react-router";
+import { parseRouteParams } from "@rwgql/router";
+import Page from "../../src/pages/PostPage/PostPage";
+import { loader as pageLoader } from "../../src/pages/PostPage/PostPage";
+
+const paramTypes = {"id":"Int"} as const;
+
+// Cedar typed params: a value that does not match its type means no match.
+export const loader = (args: LoaderFunctionArgs) => {
+  if (!parseRouteParams(paramTypes, args.params)) {
+    throw data(null, { status: 404 });
+  }
+
+  return pageLoader(args as Parameters<typeof pageLoader>[0]);
+};
+
+export { headers } from "../../src/pages/PostPage/PostPage";
+
+export default function PostRoute() {
+  const params = parseRouteParams(paramTypes, useParams());
+  if (!params) {
+    // Unreachable after the loader's 404; keeps the page props typed.
+    throw new Error("@rwgql/router: params do not match post");
+  }
+
+  return <Page {...params} />;
+}
+",
+  "sets/set-0.tsx": "// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
+
+import { Outlet } from "react-router";
+import AppLayout from "../../src/layouts/AppLayout/AppLayout";
+import { Icon } from "@my-org/ui";
+
+export default function Set0() {
+  return <AppLayout title={"App"} icon={Icon}><Outlet /></AppLayout>;
+}
+",
+  "sets/set-1.tsx": "// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
+
+import { Outlet } from "react-router";
+import { requireAuth } from "@rwgql/router/server";
+
+export const middleware = [requireAuth({ loginPath: "/login", roles: ["admin"] })];
+
+// A server loader makes client-side navigations round-trip so the middleware runs.
+export const loader = () => null;
+
+export default function Set1() {
+  return <Outlet />;
+}
+",
+}
+`;
+
+exports[`generateRoutes (React Router) > emits a stable app directory (golden) 2`] = `
+"// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
+
+export const routeDefinitions = [
+  { name: "login", path: "/login", params: {} },
+  { name: "home", path: "/", params: {} },
+  { name: "post", path: "/posts/:id", params: { id: "Int" } },
+  { name: "old", path: "/old", params: {} },
+  { name: "admin", path: "/admin", params: {} },
+  { name: "notFound", path: "/*", params: {} },
+] as const;
+
+// Types \`routes\` from @rwgql/router for this app (Cedar's web-routes type augmentation).
+declare module "@rwgql/router" {
+  interface RegisteredRoutes {
+    definitions: typeof routeDefinitions;
+  }
+}
+"
+`;

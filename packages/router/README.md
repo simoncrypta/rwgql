@@ -1,39 +1,104 @@
 # @rwgql/router
 
-Redwood-style route trees for RedwoodSDK apps: JSX route definitions, named route helpers, worker
-compilation, and edge-cache metadata for public routes.
+Cedar-compatible routing for RedwoodGQL. You write Cedar's `src/Routes.tsx`, and it is compiled to
+[React Router](https://reactrouter.com) framework-mode route modules. App code keeps Cedar's API:
+`routes`, `Link`, `NavLink`, `navigate`, `back`, `useParams`, `useMatch`, `useBlocker`, `Redirect`.
 
-## Route trees
+See `test-apps/cedar/web` for a full app. The RedwoodSDK flavour used by `test-apps/rwsdk/web` lives under
+`@rwgql/router/routes`, `/worker`, and `/rwsdk` until that app is retired.
 
-Define routes in `src/Routes.tsx` using `<Router>`, `<Set>`, `<Private>`, and `<Route>`:
+## Routes.tsx
 
 ```tsx
-import { defineRoutes, Private, Route, Router, Set } from "@rwgql/router/routes";
+import { Private, Route, Router, Set } from "@rwgql/router";
 
-const routeTree = (
+const Routes = () => (
   <Router>
-    <Route path="/double" page={DoublePage} name="double" cache />
+    <Route path="/login" page={LoginPage} name="login" />
     <Set wrap={BlogLayout} cache>
       <Route path="/" page={HomePage} name="home" />
       <Route path="/blog-post/{id:Int}" page={BlogPostPage} name="blogPost" />
       <Private unauthenticated="login">
         <Route path="/profile" page={ProfilePage} name="profile" />
       </Private>
+      <Route notfound page={NotFoundPage} />
     </Set>
   </Router>
 );
 
-export default defineRoutes(routeTree);
-export { routes, type WebRouteName } from "@/routes";
+export default Routes;
 ```
 
-Run `vp run generate-routes` (via `createGenerateRoutesTasks()` in your Vite config) to emit
-`src/routeDefinitions.gen.ts` for `buildNamedRoutes()`.
+The file is compiled statically, as Cedar does, and is never rendered. Supported:
+
+- `<Route path page name notfound cache redirect>`. `prerender`, `whileLoadingPage`, and
+  `<Router useAuth>` are accepted for Cedar compatibility.
+- `<Set wrap={A | [A, B]} {...literal props}>`, `<PrivateSet>`, `<Private>`, `<Set private>`, and
+  `roles`.
+- Page auto-imports (`ContactNewContactPage` → `src/pages/Contact/NewContactPage/NewContactPage`)
+  and directory-named imports (`src/layouts/BlogLayout`).
+- Set props must be literals, route names, or imported identifiers. Computed values, spreads, and
+  conditional routes fail with a `Routes.tsx:line:col` error.
+
+Cedar's own `__fixtures__/test-project/web/src/Routes.tsx` compiles unchanged (see
+`src/codegen/__fixtures__`).
+
+## React Router setup
+
+```ts
+// react-router.config.ts
+export default {
+  appDirectory: ".rwgql", // generated; avoids Routes.tsx vs routes.ts clashing on macOS
+  ssr: true,
+  future: { v8_middleware: true },
+} satisfies Config;
+
+// vite.config.ts: rwgqlRoutes() before reactRouter()
+plugins: [rwgqlRoutes(), cloudflare({ viteEnvironment: { name: "ssr" } }), reactRouter()];
+```
+
+The generated `.rwgql/` contains `routes.ts`, a `root.tsx` that renders `src/Document.tsx` →
+`src/App.tsx`, and `FatalErrorPage`/`NotFoundPage` as error boundaries. It also contains
+re-exports of `src/entry.{server,client}.tsx`, one layout module per Set, and one module per route.
+Route modules forward a page's `loader`, `headers`, `meta`, `ErrorBoundary`, and so on, and they
+pass Cedar-typed params to the page as props.
+
+Server side, set the auth state for `<Private>` per request:
+
+```ts
+import { routeAuthContext } from "@rwgql/router/server";
+
+context.set(routeAuthContext, { isAuthenticated: Boolean(session) });
+```
+
+Private Sets get `requireAuth` middleware, which responds with a 302 to the `unauthenticated` route
+and adds `?redirectTo=`. A server loader on each private Set makes client-side navigations
+round-trip, so the check also runs on client-side navigation.
+
+## Route params
+
+Paths use Cedar's param syntax. Params arrive at the page as typed props, and `routes.*` helpers
+are typed per route from `src/routeDefinitions.gen.ts`:
+
+| Path segment    | Page prop / helper param type |
+| --------------- | ----------------------------- |
+| `{id}`          | `string`                      |
+| `{slug:String}` | `string`                      |
+| `{id:Int}`      | `number`                      |
+| `{x:Float}`     | `number`                      |
+| `{x:Boolean}`   | `boolean`                     |
+| `{path...}`     | `string` (glob, last segment) |
+
+A value that does not match its type (for example `/posts/abc` for `{id:Int}`) responds 404.
+`useParams()` returns the typed values for the matched route.
+Extra keys passed to a helper become the query string:
+`routes.post({ id: 1, tab: "comments" })` → `/posts/1?tab=comments`. Custom param types are not
+supported.
 
 ## Public routes and edge caching
 
-RedwoodSDK renders on the edge (SSR/RSC). For public pages, the RWSdk-native alternative to Cedar
-build-time prerender is **edge SSR plus CDN caching** — not static HTML generation at build time.
+Pages render on the edge (SSR in a Cloudflare Worker). For public pages, the alternative to Cedar's
+build-time prerender is **edge SSR plus CDN caching** rather than static HTML generated at build time.
 
 Mark cacheable routes with `cache`:
 
@@ -51,14 +116,15 @@ Mark cacheable routes with `cache`:
 
 Default policy: `public, max-age=60, stale-while-revalidate=300`.
 
-The router sets `Cache-Control` via RedwoodSDK route middleware before your page handler runs.
+With React Router, the generated route module exports `headers` with `Cache-Control`; a page's own
+`headers` export takes precedence. In the legacy RedwoodSDK flavour, route middleware sets the header.
 Cloudflare can then cache the SSR HTML response at the edge.
 
 Auth, form, and session routes should omit `cache` so responses stay private.
 
-## Worker integration
+## Legacy: RedwoodSDK worker integration
 
-Compile the route tree for the RedwoodSDK worker:
+`test-apps/rwsdk/web` (RedwoodSDK) compiles the route tree for the worker at runtime:
 
 ```tsx
 import { withWorkerCompile } from "@rwgql/router/worker";
@@ -68,25 +134,27 @@ const { workerRoutes } = withWorkerCompile({
   routes,
 }).compile({
   isAuthenticated: ({ ctx }) => Boolean(ctx.session),
-  parseRouteId: (requestInfo) => Number.parseInt(requestInfo.params.id, 10),
   renderPage,
 });
 ```
 
-See `test-apps/web/src/worker.tsx` for a full example with Apollo streaming.
+See `test-apps/rwsdk/web/src/worker.tsx` for a full example with Apollo streaming.
 
 ## Package exports
 
-| Export                  | Purpose                                                  |
-| ----------------------- | -------------------------------------------------------- |
-| `@rwgql/router`         | Client helpers (`Link`, `NavLink`, `usePathname`)        |
-| `@rwgql/router/routes`  | Route tree JSX primitives, `defineRoutes`, cache helpers |
-| `@rwgql/router/worker`  | Worker route compilation                                 |
-| `@rwgql/router/codegen` | Route definition generation                              |
-| `@rwgql/router/tasks`   | Vite Task helpers (`createGenerateRoutesTasks`)          |
+| Export                  | Purpose                                                                       |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| `@rwgql/router`         | Cedar API on React Router: route-tree markers, `routes`, links, hooks         |
+| `@rwgql/router/server`  | `routeAuthContext`, `requireAuth` middleware                                  |
+| `@rwgql/router/vite`    | `rwgqlRoutes()`: compile `Routes.tsx` into `.rwgql/` and keep it in sync      |
+| `@rwgql/router/codegen` | Parser, module resolution, React Router emitter, route definitions            |
+| `@rwgql/router/tasks`   | Vite Task helpers (`createGenerateRoutesTasks`)                               |
+| `@rwgql/router/routes`  | Legacy RedwoodSDK: route-tree primitives, `defineRoutes`, `createNamedRoutes` |
+| `@rwgql/router/worker`  | Legacy RedwoodSDK: worker route compilation                                   |
+| `@rwgql/router/rwsdk`   | Legacy RedwoodSDK: client `Link`, `NavLink`, `navigate`                       |
 
 ## Cedar parity note
 
 Classic Redwood `prerender` and `*.routeHooks.ts` / `routeParameters()` are intentionally **not**
-replicated here. They target build-time SSG, which does not match the RedwoodSDK Worker model. Use
-`cache` on public routes instead; see classic Cedar apps for the legacy prerender model.
+replicated here. They target build-time SSG, which does not match the edge SSR model. `prerender` is
+accepted and ignored; use `cache` on public routes instead.

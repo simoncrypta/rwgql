@@ -7,6 +7,11 @@ export type CreateGenerateRoutesTasksOptions = {
   readonly routesFile?: string;
   readonly outputFile?: string;
   readonly dependsOnBuild?: string;
+  /**
+   * React Router mode: generated route modules also depend on page exports, so the task is not
+   * cached on Routes.tsx alone.
+   */
+  readonly reactRouter?: boolean;
 };
 
 export const createGenerateRoutesTasks = (
@@ -17,11 +22,17 @@ export const createGenerateRoutesTasks = (
   const dependsOnBuild = options.dependsOnBuild ?? ROUTER_BUILD_TASK;
 
   return {
-    "generate-routes": {
-      command: "vp exec rwgql-router-generate-routes",
-      dependsOn: [dependsOnBuild],
-      input: [routesFile],
-      output: [outputFile],
-    },
+    "generate-routes": options.reactRouter
+      ? {
+          command: "vp exec rwgql-router-generate-routes",
+          dependsOn: [dependsOnBuild],
+          cache: false,
+        }
+      : {
+          command: "vp exec rwgql-router-generate-routes",
+          dependsOn: [dependsOnBuild],
+          input: [routesFile],
+          output: [outputFile],
+        },
   };
 };

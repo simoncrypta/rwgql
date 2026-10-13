@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vite-plus/test";
 
+import { generateRouteDefinitionsFileContent } from "./generateRoutes.js";
 import {
   extractRouteNamesFromSource,
   routeNameEntriesFromTree,
@@ -12,7 +13,7 @@ import { routeNamesFromTree, Private, Route, Router, Set } from "../routeTree.js
 const HomePage = () => null;
 
 const findRoutesFile = () => {
-  const relativePath = path.join("test-apps", "web", "src", "Routes.tsx");
+  const relativePath = path.join("test-apps", "rwsdk", "web", "src", "Routes.tsx");
   const candidates = [
     path.resolve(process.cwd(), relativePath),
     path.resolve(process.cwd(), "..", "..", relativePath),
@@ -57,12 +58,12 @@ describe("extractRouteNamesFromSource", () => {
       );
     `;
 
-    expect(extractRouteNamesFromSource(source).map(({ name, path }) => ({ name, path }))).toEqual(
+    expect(extractRouteNamesFromSource(source)).toEqual(
       routeNameEntriesFromTree(routeNamesFromTree(routeTree)),
     );
   });
 
-  it("matches routeNamesFromTree for test-apps/web Routes.tsx", () => {
+  it("matches routeNamesFromTree for test-apps/rwsdk/web Routes.tsx", () => {
     const routesFile = findRoutesFile();
     const source = readFileSync(routesFile, "utf8");
 
@@ -88,5 +89,26 @@ describe("extractRouteNamesFromSource", () => {
       "home",
       "notFound",
     ]);
+  });
+
+  it("extracts Cedar param types and emits them in the generated definitions", () => {
+    const source = `
+      <Router>
+        <Route path="/" page={HomePage} name="home" />
+        <Route path="/posts/{id:Int}/{slug}" page={PostPage} name="post" />
+        <Route path="/docs/{path...}" page={DocsPage} name="docs" />
+      </Router>
+    `;
+
+    const routes = extractRouteNamesFromSource(source);
+
+    expect(routes).toEqual([
+      { name: "home", path: "/", params: {} },
+      { name: "post", path: "/posts/:id/:slug", params: { id: "Int", slug: "String" } },
+      { name: "docs", path: "/docs/*", params: { path: "Glob" } },
+    ]);
+    expect(generateRouteDefinitionsFileContent(routes)).toContain(
+      '  { name: "post", path: "/posts/:id/:slug", params: { id: "Int", slug: "String" } },',
+    );
   });
 });

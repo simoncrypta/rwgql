@@ -17,5 +17,6 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true
-  }
+  },
+  "exclude": ["dist", "node_modules", "src/**/__fixtures__/**"]
 }
