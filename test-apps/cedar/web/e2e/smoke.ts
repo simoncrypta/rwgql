@@ -1,7 +1,5 @@
-// End-to-end smoke test for the Cedar-shaped app on React Router (workerd via `vp preview`).
-// Usage (from test-apps/cedar/web, after generate-routes): pnpm exec tsx e2e/smoke.ts
-// Builds, starts a mock API on :8911 and the production build on :8920, then checks SSR, caching,
-// auth redirects, typed params, 404s, hydration without refetch, and client navigation.
+// Production build on workerd (`vp preview`, :8920) against a mock API (:8911).
+// Usage: vp run e2e (from test-apps/cedar/web).
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -25,9 +23,8 @@ const check = (label: string, ok: boolean, detail = "") => {
   if (!ok) failures.push(label);
 };
 
-// The Worker reads DB_AUTH_SECRET from .dev.vars (gitignored). The Cloudflare plugin copies it
-// into the build output at build time, so build after writing it. The original file is restored
-// at the end so `vp dev` keeps using the same secret as the real API.
+// The Cloudflare plugin copies .dev.vars into the build, so write it before building; restore it
+// afterwards so `vp dev` keeps the real API's secret.
 const previousDevVars = existsSync(".dev.vars") ? readFileSync(".dev.vars", "utf8") : undefined;
 const restoreDevVars = () =>
   previousDevVars === undefined
@@ -69,7 +66,6 @@ try {
   }
   api.calls.length = 0;
 
-  // --- HTTP ---------------------------------------------------------------------------------
   const home = await get("/");
   const homeHtml = await home.text();
   check("GET / → 200", home.status === 200, String(home.status));
@@ -116,7 +112,6 @@ try {
     missingHtml.includes("Redwood Blog") && /not found/i.test(missingHtml),
   );
 
-  // --- Browser ------------------------------------------------------------------------------
   const browser = await chromium.launch();
   const consoleErrors: string[] = [];
   const watch = (page: import("playwright").Page) => {

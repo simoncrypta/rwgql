@@ -25,7 +25,6 @@ const FORWARDED_EXPORTS = [
 export type EmitReactRouterOptions = {
   /** Absolute path of the generated React Router appDirectory (e.g. web/.rwgql). */
   readonly appDir: string;
-  /** Absolute path of the web side's src directory. */
   readonly srcDir: string;
   /** Absolute path of the generated route definitions module (e.g. src/routeDefinitions.gen.ts). */
   readonly definitionsFile: string;
@@ -74,7 +73,6 @@ const stripExtension = (file: string) => file.replace(/\.(tsx|ts|jsx|js)$/, "");
 
 const routeFileName = (route: RouteEntry) => `routes/${route.name}.tsx`;
 
-/** React Router route path relative to its (pathless) parent layouts. */
 const relativeRoutePath = (route: RouteEntry) => route.path.replace(/^\//, "");
 
 const importLine = (local: string, target: ModuleTarget, fromFile: string): string => {
@@ -122,8 +120,6 @@ export const emitReactRouterApp = (
     return route.path;
   };
 
-  // --- route modules -------------------------------------------------------------------------
-
   for (const route of routes) {
     const file = path.join(appDir, routeFileName(route));
     const lines: string[] = [HEADER];
@@ -170,7 +166,7 @@ export const emitReactRouterApp = (
       body.push(
         `const paramTypes = ${JSON.stringify(route.params)} as const;`,
         "",
-        "// Cedar typed params: a value that does not match its type means no match.",
+        "// A param that does not match its Cedar type is a 404.",
         "export const loader = (args: LoaderFunctionArgs) => {",
         "  if (!parseRouteParams(paramTypes, args.params)) {",
         "    throw data(null, { status: 404 });",
@@ -232,8 +228,6 @@ export const emitReactRouterApp = (
 
     files.set(routeFileName(route), `${lines.join("\n")}\n`);
   }
-
-  // --- set (layout) modules and routes.ts ----------------------------------------------------
 
   let setCounter = 0;
 
@@ -303,7 +297,7 @@ export const emitReactRouterApp = (
           : [`${indent}route(${JSON.stringify(relativeRoutePath(node))}, ${fileName}, ${id}),`];
       }
 
-      // A Set without wrappers or auth only carries cache/props defaults (already applied).
+      // Sets without wrappers or auth only carry defaults, already applied to their routes.
       if (node.wraps.length === 0 && !node.private) {
         return emitNodes(node.children, indent);
       }
@@ -329,8 +323,6 @@ export const emitReactRouterApp = (
       "",
     ].join("\n"),
   );
-
-  // --- root and entries ----------------------------------------------------------------------
 
   const rootFile = path.join(appDir, "root.tsx");
   const appModule = resolveFile(path.join(srcDir, "App"));
@@ -418,7 +410,7 @@ ${notFoundBranch}${fatalBranch}
 
   const entryClient = resolveFile(path.join(srcDir, "entry.client"));
   if (entryClient) {
-    // The client entry is a side-effect module (it hydrates the document).
+    // Side-effect module: it hydrates the document.
     files.set(
       "entry.client.tsx",
       `${HEADER}import ${JSON.stringify(relativeSpecifier(path.join(appDir, "entry.client.tsx"), entryClient))};\n`,

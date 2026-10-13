@@ -123,8 +123,7 @@ function DefaultLoading() {
   return <>Loading...</>;
 }
 
-// Cedar's Cell defaults: show cached data immediately, then refresh from the server, so a list
-// is current after client-side navigation (e.g. a scaffold's navigate() after a mutation).
+// Cedar's Cell defaults; cache-first leaves lists stale after client-side navigation.
 const DEFAULT_CELL_QUERY_OPTIONS = {
   fetchPolicy: "cache-and-network",
   notifyOnNetworkStatusChange: true,

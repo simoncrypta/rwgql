@@ -44,7 +44,6 @@ export const navigate = (to: string, options: NavigateOptions = {}) => {
   }
 };
 
-/** Cedar's `back()`. */
 export const back = () => {
   if (navigator) {
     void navigator(-1);
@@ -58,7 +57,6 @@ export type RedirectProps = {
   readonly options?: NavigateOptions;
 };
 
-/** Cedar's `<Redirect to>`. */
 export const Redirect = ({ to, options }: RedirectProps) => (
   <Navigate to={to} replace={options?.replace} />
 );

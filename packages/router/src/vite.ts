@@ -27,7 +27,7 @@ export const rwgqlRoutes = (options: RwgqlRoutesPluginOptions = {}) => {
     try {
       generateRoutes({ ...options, root: root ?? process.cwd() });
     } catch (error) {
-      // Keep the dev server alive; the error names the offending Routes.tsx node.
+      // Keep the dev server alive; the message points at the Routes.tsx node.
       console.error((error as Error).message);
     }
   };

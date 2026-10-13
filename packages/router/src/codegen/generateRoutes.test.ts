@@ -105,7 +105,6 @@ describe("generateRoutes (React Router)", () => {
       '{ name: "editContact", path: "/contacts/:id/edit", params: { id: "Int" } }',
     );
 
-    // Auto-imported page (ContactNewContactPage) and directory-named layout import.
     expect(read(root, ".rwgql/routes/newContact.tsx")).toContain(
       'export { default } from "../../src/pages/Contact/NewContactPage/NewContactPage";',
     );
@@ -113,14 +112,12 @@ describe("generateRoutes (React Router)", () => {
       'import ScaffoldLayout from "../../src/layouts/ScaffoldLayout/ScaffoldLayout";',
     );
 
-    // <Private unauthenticated="login"> under the BlogLayout Set.
     const routeConfig = read(root, ".rwgql/routes.ts");
     expect(routeConfig).toContain('route("profile", "routes/profile.tsx", { id: "profile" })');
     const privateSet = read(root, ".rwgql/sets/set-3.tsx");
     expect(privateSet).toContain('requireAuth({ loginPath: "/login" })');
     expect(privateSet).toContain("export const loader = () => null;");
 
-    // The fixture's Router never imports the root files; the generated root still works.
     expect(read(root, ".rwgql/root.tsx")).toContain(
       'import FatalErrorPageModule from "../src/pages/FatalErrorPage/FatalErrorPage";',
     );

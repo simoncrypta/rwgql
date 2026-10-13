@@ -21,9 +21,7 @@ export const Document = ({ children }: { readonly children: ReactNode }) => {
         <link rel="stylesheet" href={appStylesHref} />
         <link rel="stylesheet" href={scaffoldStylesHref} />
         <Meta />
-        {/* Stylesheet links need no nonce (style-src allows 'self'). An empty value also keeps
-            React Router from copying the script nonce onto them: browsers blank nonce attributes,
-            so a nonce'd <link> can never hydrate cleanly. */}
+        {/* Empty nonce: browsers blank nonce attributes, so a nonce'd <link> can't hydrate. */}
         <Links nonce="" />
       </head>
       <body>

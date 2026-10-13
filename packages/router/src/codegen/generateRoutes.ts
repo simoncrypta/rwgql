@@ -120,7 +120,7 @@ export const generateRoutes = ({
       writeIfChanged(path.join(appDirPath, relative), content);
     }
 
-    // The app directory is fully generated: drop modules for routes that no longer exist.
+    // .rwgql is fully generated: drop modules of removed routes.
     for (const relative of listFiles(appDirPath)) {
       if (!files.has(relative)) {
         rmSync(path.join(appDirPath, relative));

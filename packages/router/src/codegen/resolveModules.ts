@@ -8,7 +8,6 @@ export type ModuleTarget =
   | { readonly kind: "package"; readonly specifier: string; readonly exportName: string };
 
 export type ResolveModulesOptions = {
-  /** Absolute path of src/Routes.tsx. */
   readonly routesFile: string;
   /** Absolute path of the web side's src directory (target of `@/` and Cedar's `src/`). */
   readonly srcDir: string;

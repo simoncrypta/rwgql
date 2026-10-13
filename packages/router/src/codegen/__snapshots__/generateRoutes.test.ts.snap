@@ -107,7 +107,7 @@ import { loader as pageLoader } from "../../src/pages/PostPage/PostPage";
 
 const paramTypes = {"id":"Int"} as const;
 
-// Cedar typed params: a value that does not match its type means no match.
+// A param that does not match its Cedar type is a 404.
 export const loader = (args: LoaderFunctionArgs) => {
   if (!parseRouteParams(paramTypes, args.params)) {
     throw data(null, { status: 404 });
