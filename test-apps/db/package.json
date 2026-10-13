@@ -7,7 +7,7 @@
     ".": "./index.ts"
   },
   "dependencies": {
-    "@cedarjs/pg": "0.2.0-alpha.0",
+    "@cedarjs/pg": "0.3.0",
     "@prisma/client": "^6.19.0"
   },
   "devDependencies": {

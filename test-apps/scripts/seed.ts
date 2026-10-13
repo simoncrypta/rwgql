@@ -37,6 +37,12 @@ const seedUsers = async () => {
   } else {
     console.info("Users already seeded");
   }
+
+  // Explicit ids do not advance the id sequence; without this the first signup gets id 1 and
+  // fails on the primary key. Runs every time so already-seeded databases are repaired too.
+  await db.$executeRawUnsafe(
+    `SELECT setval(pg_get_serial_sequence('"User"', 'id'), (SELECT COALESCE(MAX(id), 1) FROM "User"))`,
+  );
 };
 
 const seedPosts = async () => {

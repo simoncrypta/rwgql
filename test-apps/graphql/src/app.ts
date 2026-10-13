@@ -4,12 +4,23 @@ import { db } from "db";
 import { dbAuthOptions } from "./auth/dbAuthConfig.ts";
 import { createGraphqlYoga } from "./graphql.ts";
 
-const webOrigin = process.env.WEB_ORIGIN ?? "http://localhost:8910";
+// Comma-separated CORS allowlist. Local default covers both web apps
+// (test-apps/rwsdk/web on :8910, test-apps/cedar/web on :8920).
+const webOrigins = (process.env.WEB_ORIGIN ?? "http://localhost:8910,http://localhost:8920")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+/** Echo the request origin when allowlisted (credentialed CORS needs one exact origin). */
+function allowedOrigin(request: Request): string {
+  const origin = request.headers.get("Origin");
+  return origin && webOrigins.includes(origin) ? origin : (webOrigins[0] ?? "");
+}
 const yoga = createGraphqlYoga();
 
 function applyCors(request: Request, response: Response): Response {
   const headers = new Headers(response.headers);
-  headers.set("Access-Control-Allow-Origin", webOrigin);
+  headers.set("Access-Control-Allow-Origin", allowedOrigin(request));
   headers.set("Access-Control-Allow-Credentials", "true");
   headers.set("Access-Control-Allow-Methods", "GET,HEAD,POST,OPTIONS");
   headers.set(

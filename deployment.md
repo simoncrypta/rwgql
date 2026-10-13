@@ -3,7 +3,7 @@
 RedwoodGQL production uses **Cloudflare Workers** for the web app and **Render** for the GraphQL API and PostgreSQL database.
 
 ```text
-Browser → Cloudflare Worker (test-apps/web)
+Browser → Cloudflare Worker (test-apps/rwsdk/web)
               ↓ VITE_GRAPHQL_URL / VITE_AUTH_URL
          Render web service (test-apps/graphql)
               ↓ internal DATABASE_URL
@@ -53,7 +53,7 @@ After the Blueprint is created, set these on the **rwgql-api** service (they are
 
 | Variable                | Example                         | Purpose                                             |
 | ----------------------- | ------------------------------- | --------------------------------------------------- |
-| `WEB_ORIGIN`            | `https://rwgql.simoncrypta.dev` | CORS allowlist for the Cloudflare web app           |
+| `WEB_ORIGIN`            | `https://rwgql.simoncrypta.dev` | CORS allowlist (comma-separated) for the web app(s) |
 | `DB_AUTH_COOKIE_DOMAIN` | `.simoncrypta.dev`              | Shared session cookie across web and API subdomains |
 
 `DATABASE_URL` is wired automatically from the linked Postgres instance (internal URL).
@@ -116,14 +116,14 @@ Set when building (baked into the Worker bundle):
 Must match Render’s `DB_AUTH_SECRET`:
 
 ```bash
-cd test-apps/web
+cd test-apps/rwsdk/web
 wrangler secret put DB_AUTH_SECRET
 ```
 
 ### Build and deploy
 
 ```bash
-cd test-apps/web
+cd test-apps/rwsdk/web
 VITE_GRAPHQL_URL=https://api.example.com/graphql \
 VITE_AUTH_URL=https://api.example.com/auth \
 vp run release
