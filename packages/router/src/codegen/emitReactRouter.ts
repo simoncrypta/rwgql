@@ -140,13 +140,7 @@ export const emitReactRouterApp = (
       continue;
     }
 
-    if (!route.page) {
-      throw new Error(
-        `@rwgql/router: <Route name="${route.name}"> uses render, which is RWSDK-only; use page={...} with React Router`,
-      );
-    }
-
-    const page = target(route.page);
+    const page = target(route.page!);
     const pageExports =
       page.kind === "file" ? readExports(page.file) : new globalThis.Set<string>(["default"]);
     const pageSpecifier =

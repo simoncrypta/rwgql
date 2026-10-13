@@ -22,7 +22,6 @@ const config: CodegenConfig = {
   schema: schemaPath,
   ignoreNoDocuments: true,
   generates: {
-    ...clientOutput("../rwsdk/web"),
     ...clientOutput("../cedar/web"),
     ...createRedwoodResolverGenerateEntry(),
   },

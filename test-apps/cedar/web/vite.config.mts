@@ -69,9 +69,9 @@ export default defineConfig({
   },
   run: {
     tasks: {
-      ...createGenerateRoutesTasks({ reactRouter: true }),
+      ...createGenerateRoutesTasks(),
       dev: {
-        command: "vp dev --port 8920",
+        command: "vp dev --port 8910",
         dependsOn: [...webPackageBuilds, "generate-routes"],
         cache: false,
       },
@@ -80,8 +80,14 @@ export default defineConfig({
         dependsOn: [...webPackageBuilds, "generate-routes"],
       },
       preview: {
-        command: "vp preview --port 8920",
+        command: "vp preview --port 8910",
         dependsOn: ["build"],
+        cache: false,
+      },
+      // Deploy the Worker (VITE_* URLs from .env.production.local; DB_AUTH_SECRET via wrangler secret).
+      release: {
+        command: ["vp build", "wrangler deploy"],
+        dependsOn: [...webPackageBuilds, "generate-routes"],
         cache: false,
       },
       // Production build on workerd against a mock API: SSR, caching, auth, params, hydration.

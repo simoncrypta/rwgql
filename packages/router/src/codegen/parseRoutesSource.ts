@@ -40,8 +40,6 @@ const ROUTE_PROPS = new globalThis.Set([
   "prerender",
   "private",
   "redirect",
-  // RWSDK-only (legacy test-apps/rwsdk/web); rejected by the React Router emitter.
-  "render",
   "whileLoadingPage",
 ]);
 
@@ -351,8 +349,7 @@ export const parseRoutesSource = (
     const name =
       readString(attributes.get("name"), "<Route name>") ?? (notfound ? "notFound" : undefined);
 
-    const render = attributes.has("render");
-    if (!page && !redirect && !render) {
+    if (!page && !redirect) {
       fail(element, "<Route> requires page (or redirect)");
     }
 
@@ -382,7 +379,6 @@ export const parseRoutesSource = (
       page,
       notfound,
       redirect,
-      render: render || undefined,
       cacheControl: isPrivate ? undefined : resolveRouteCacheControl(cache, context.cacheControl),
       private: isPrivate,
       unauthenticated: isPrivate ? context.unauthenticated : undefined,

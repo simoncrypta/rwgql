@@ -2,7 +2,7 @@
   "name": "cedar-web",
   "version": "0.0.0",
   "private": true,
-  "description": "Cedar-shaped web side on React Router framework mode + Apollo (no RedwoodSDK)",
+  "description": "Cedar-shaped web side on React Router framework mode + Apollo",
   "type": "module",
   "dependencies": {
     "@apollo/client": "^4.2.3",
@@ -40,6 +40,7 @@
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:",
+    "vitest": "catalog:",
     "wrangler": "4.85.0"
   }
 }

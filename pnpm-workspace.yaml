@@ -1,7 +1,6 @@
 packages:
   - test-apps/*
   - test-apps/cedar/*
-  - test-apps/rwsdk/*
   - packages/*
   - tools/*
 
@@ -39,6 +38,5 @@ allowBuilds:
   sharp: true
   workerd: true
 minimumReleaseAgeExclude:
-  - rwsdk@1.5.0
 patchedDependencies:
   "@react-router/dev@7.18.4": patches/@react-router__dev@7.18.4.patch

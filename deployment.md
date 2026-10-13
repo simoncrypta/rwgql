@@ -3,7 +3,7 @@
 RedwoodGQL production uses **Cloudflare Workers** for the web app and **Render** for the GraphQL API and PostgreSQL database.
 
 ```text
-Browser → Cloudflare Worker (test-apps/rwsdk/web)
+Browser → Cloudflare Worker (test-apps/cedar/web, React Router SSR)
               ↓ VITE_GRAPHQL_URL / VITE_AUTH_URL
          Render web service (test-apps/graphql)
               ↓ internal DATABASE_URL
@@ -116,29 +116,25 @@ Set when building (baked into the Worker bundle):
 Must match Render’s `DB_AUTH_SECRET`:
 
 ```bash
-cd test-apps/rwsdk/web
+cd test-apps/cedar/web
 wrangler secret put DB_AUTH_SECRET
 ```
 
 ### Build and deploy
 
+Copy [`test-apps/cedar/web/.env.production.example`](test-apps/cedar/web/.env.production.example) to
+`.env.production.local` with your API URLs (or export them), then:
+
 ```bash
-cd test-apps/rwsdk/web
-VITE_GRAPHQL_URL=https://api.example.com/graphql \
-VITE_AUTH_URL=https://api.example.com/auth \
-vp run release
+cd test-apps/cedar/web
+vp run release   # vp build && wrangler deploy
 ```
 
-**PoC Worker URL:** `https://rwgql-rwsdk.hello-091.workers.dev` — rebuild with your real `api.*` URLs before go-live.
+The Worker is named `rwgql-cedar-web` ([`wrangler.jsonc`](test-apps/cedar/web/wrangler.jsonc)). The first
+release creates that Worker, so set its `DB_AUTH_SECRET` and attach the custom domain.
 
 Copy `DB_AUTH_SECRET` from [`.deploy-secrets.local`](.deploy-secrets.local) (gitignored) to Render after the
-Blueprint applies. The Worker already has this secret via `wrangler secret put`.
-
-Or step by step:
-
-```bash
-vp run clean && vp run build && wrangler deploy
-```
+Blueprint applies.
 
 ### Custom domain (web)
 
@@ -180,12 +176,12 @@ After both services are live:
 
 ## Troubleshooting
 
-| Symptom                       | Check                                                                                                          |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| CORS errors                   | `WEB_ORIGIN` matches exact web URL (scheme + host, no trailing slash)                                          |
-| SSR always logged out         | `DB_AUTH_COOKIE_DOMAIN`, `DB_AUTH_SECRET` match on both sides                                                  |
-| Prisma engine error on Render | `binaryTargets` includes `debian-openssl-3.0.x` in schema                                                      |
-| Build fails on Render         | Node ≥ 22, `vp run --no-cache deploy:build` logs, workspace `packages/*/dist` present                          |
-| Empty posts / wrong DB        | Confirm `NODE_ENV=production` so prepare does not write localhost `.env`; seed targets `rwgql-db`              |
-| `getToken` 401 on `/auth`     | Normal when logged out; cross-origin cookies need `DB_AUTH_COOKIE_SAMESITE=None` + custom domains for SSR auth |
-| MCP unauthorized              | Personal Render API key in `~/.cursor/mcp.json`, restart Cursor                                                |
+| Symptom                       | Check                                                                                                                |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| CORS errors                   | `WEB_ORIGIN` matches exact web URL (scheme + host, no trailing slash)                                                |
+| SSR always logged out         | `DB_AUTH_COOKIE_DOMAIN`, `DB_AUTH_SECRET` match on both sides                                                        |
+| Prisma engine error on Render | `binaryTargets` includes `debian-openssl-3.0.x` in schema                                                            |
+| Build fails on Render         | Node ≥ 22, `vp run --no-cache deploy:build` logs, workspace `packages/*/dist` present                                |
+| Empty posts / wrong DB        | Confirm `NODE_ENV=production` so prepare does not write localhost `.env`; seed targets `rwgql-db`                    |
+| Always logged out on `/auth`  | `getToken` returns `null` when logged out; cross-origin cookies need `DB_AUTH_COOKIE_SAMESITE=None` + custom domains |
+| MCP unauthorized              | Personal Render API key in `~/.cursor/mcp.json`, restart Cursor                                                      |

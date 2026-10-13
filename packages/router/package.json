@@ -14,10 +14,6 @@
       "types": "./dist/index.d.mts",
       "default": "./dist/index.mjs"
     },
-    "./rwsdk": {
-      "types": "./dist/rwsdk.d.mts",
-      "default": "./dist/rwsdk.mjs"
-    },
     "./server": {
       "types": "./dist/server.d.mts",
       "default": "./dist/server.mjs"
@@ -25,14 +21,6 @@
     "./vite": {
       "types": "./dist/vite.d.mts",
       "default": "./dist/vite.mjs"
-    },
-    "./routes": {
-      "types": "./dist/routes.d.mts",
-      "default": "./dist/routes.mjs"
-    },
-    "./worker": {
-      "types": "./dist/worker.d.mts",
-      "default": "./dist/worker.mjs"
     },
     "./codegen": {
       "types": "./dist/codegen/index.d.mts",
@@ -69,21 +57,13 @@
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "react-router": "7.18.4",
-    "rwsdk": "1.5.0",
-    "vite-plus": "catalog:"
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "react": "^19",
     "react-dom": "^19",
-    "react-router": "^7.18.4",
-    "rwsdk": "^1.5.0"
-  },
-  "peerDependenciesMeta": {
-    "react-router": {
-      "optional": true
-    },
-    "rwsdk": {
-      "optional": true
-    }
+    "react-router": "^7.18.4"
   }
 }

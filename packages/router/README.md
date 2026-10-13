@@ -4,8 +4,7 @@ Cedar-compatible routing for RedwoodGQL. You write Cedar's `src/Routes.tsx`, and
 [React Router](https://reactrouter.com) framework-mode route modules. App code keeps Cedar's API:
 `routes`, `Link`, `NavLink`, `navigate`, `back`, `useParams`, `useMatch`, `useBlocker`, `Redirect`.
 
-See `test-apps/cedar/web` for a full app. The RedwoodSDK flavour used by `test-apps/rwsdk/web` lives under
-`@rwgql/router/routes`, `/worker`, and `/rwsdk` until that app is retired.
+See `test-apps/cedar/web` for a full app.
 
 ## Routes.tsx
 
@@ -116,42 +115,21 @@ Mark cacheable routes with `cache`:
 
 Default policy: `public, max-age=60, stale-while-revalidate=300`.
 
-With React Router, the generated route module exports `headers` with `Cache-Control`; a page's own
-`headers` export takes precedence. In the legacy RedwoodSDK flavour, route middleware sets the header.
+The generated route module exports `headers` with `Cache-Control`; a page's own `headers` export takes
+precedence.
 Cloudflare can then cache the SSR HTML response at the edge.
 
 Auth, form, and session routes should omit `cache` so responses stay private.
 
-## Legacy: RedwoodSDK worker integration
-
-`test-apps/rwsdk/web` (RedwoodSDK) compiles the route tree for the worker at runtime:
-
-```tsx
-import { withWorkerCompile } from "@rwgql/router/worker";
-
-const { workerRoutes } = withWorkerCompile({
-  ...appRoutes,
-  routes,
-}).compile({
-  isAuthenticated: ({ ctx }) => Boolean(ctx.session),
-  renderPage,
-});
-```
-
-See `test-apps/rwsdk/web/src/worker.tsx` for a full example with Apollo streaming.
-
 ## Package exports
 
-| Export                  | Purpose                                                                       |
-| ----------------------- | ----------------------------------------------------------------------------- |
-| `@rwgql/router`         | Cedar API on React Router: route-tree markers, `routes`, links, hooks         |
-| `@rwgql/router/server`  | `routeAuthContext`, `requireAuth` middleware                                  |
-| `@rwgql/router/vite`    | `rwgqlRoutes()`: compile `Routes.tsx` into `.rwgql/` and keep it in sync      |
-| `@rwgql/router/codegen` | Parser, module resolution, React Router emitter, route definitions            |
-| `@rwgql/router/tasks`   | Vite Task helpers (`createGenerateRoutesTasks`)                               |
-| `@rwgql/router/routes`  | Legacy RedwoodSDK: route-tree primitives, `defineRoutes`, `createNamedRoutes` |
-| `@rwgql/router/worker`  | Legacy RedwoodSDK: worker route compilation                                   |
-| `@rwgql/router/rwsdk`   | Legacy RedwoodSDK: client `Link`, `NavLink`, `navigate`                       |
+| Export                  | Purpose                                                                  |
+| ----------------------- | ------------------------------------------------------------------------ |
+| `@rwgql/router`         | Cedar API on React Router: route-tree markers, `routes`, links, hooks    |
+| `@rwgql/router/server`  | `routeAuthContext`, `requireAuth` middleware                             |
+| `@rwgql/router/vite`    | `rwgqlRoutes()`: compile `Routes.tsx` into `.rwgql/` and keep it in sync |
+| `@rwgql/router/codegen` | Parser, module resolution, React Router emitter, route definitions       |
+| `@rwgql/router/tasks`   | Vite Task helpers (`createGenerateRoutesTasks`)                          |
 
 ## Cedar parity note
 

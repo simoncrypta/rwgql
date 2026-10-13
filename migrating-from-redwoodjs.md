@@ -1,8 +1,8 @@
 # Migrating a RedwoodJS (Cedar) app to RedwoodGQL
 
 This guide walks through migrating a classic RedwoodJS GraphQL (Cedar) app to RedwoodGQL: `@rwgql/*`
-packages, [RedwoodSDK](https://docs.rwsdk.com/) on the web side, and the [Vite+](https://viteplus.dev/guide/)
-toolchain.
+packages, a Cedar-compatible web side on [React Router](https://reactrouter.com/) + Apollo Client, and the
+[Vite+](https://viteplus.dev/guide/) toolchain.
 
 "Before" snippets use the classic Cedar layout (`web/` + `api/`). "After" snippets point at the migrated
 demo in [`test-apps/`](test-apps/) in this repository.
@@ -17,7 +17,7 @@ packages, each independently runnable:
 ```text
 RedwoodJS (Cedar)                RedwoodGQL
 ─────────────────                ──────────
-web/                             test-apps/rwsdk/web/  RedwoodSDK app (Cloudflare worker SSR + client) with Apollo Client
+web/                             test-apps/cedar/web/  Cedar-shaped web side: React Router SSR on a Worker + Apollo Client
 api/  (functions, graphql,      test-apps/graphql/    GraphQL Yoga on node:http, SDL + services + directives
        services, directives)    test-apps/db/         Prisma schema, migrations, client — its own package
 api/db/ (Prisma)
@@ -33,21 +33,23 @@ api/db/ (Prisma)
 
 RedwoodGQL deliberately does not replace everything. Before migrating, know what goes away:
 
-| RedwoodJS feature                                             | Status                                                              |
-| ------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `<Metadata>` and `RedwoodProvider` `titleTemplate`            | Dropped for now. The `<title>` lives in `document.tsx`.             |
-| `FatalErrorBoundary`, `DevFatalErrorPage`                     | Dropped. Keep `FatalErrorPage` as a plain component if you want it. |
-| Prisma query logging (`emitLogLevels`, `handlePrismaLogging`) | Dropped. Use a bare `PrismaClient`.                                 |
-| Storybook, Cell `.mock.ts` files, `mockGraphQLQuery`          | Dropped. Tests use Vitest + Testing Library instead.                |
-| `prerender` route flag (SSG)                                  | Dropped. Worker SSR + `@rwgql/router` `cache` headers replace it.   |
-| Generators and scaffolds (`yarn rw g ...`)                    | Dropped.                                                            |
-| The `yarn rw` CLI                                             | Replaced by `vp` and per-package Vite+ tasks.                       |
+| RedwoodJS feature                                             | Status                                                                   |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `<Metadata>` and `RedwoodProvider` `titleTemplate`            | Dropped. The `<title>` lives in `Document.tsx`; pages can export `meta`. |
+| `FatalErrorBoundary`, `DevFatalErrorPage`                     | Dropped. The generated root route renders `FatalErrorPage` on errors.    |
+| Prisma query logging (`emitLogLevels`, `handlePrismaLogging`) | Dropped. Use a bare `PrismaClient`.                                      |
+| Storybook, Cell `.mock.ts` files, `mockGraphQLQuery`          | Dropped. Tests use Vitest + Testing Library instead.                     |
+| `prerender` route flag (SSG)                                  | Dropped. Worker SSR + `@rwgql/router` `cache` headers replace it.        |
+| Custom route param types                                      | Dropped. `Int`, `Float`, `Boolean`, `String`, and globs work.            |
+| Generators and scaffolds (`yarn rw g ...`)                    | Dropped.                                                                 |
+| The `yarn rw` CLI                                             | Replaced by `vp` and per-package Vite+ tasks.                            |
 
 ### Principles that drive the mechanical changes
 
 - **ESM everywhere** — every `package.json` gets `"type": "module"`; no CommonJS, no Babel.
-- **Zero magic** — no auto-imported pages, no global `gql`, no glob imports (`import services from
-'src/services/**/*.ts'`). Everything becomes an explicit import; generated files are checked-in `*.gen.ts`.
+- **Zero magic** — no global `gql` and no glob imports (`import services from 'src/services/**/*.ts'`).
+  Everything becomes an explicit import (`Routes.tsx` still accepts Cedar's auto-imported pages, for upgrades).
+  Generated files are `*.gen.ts` / `.rwgql/`, produced by Vite+ tasks.
 - **First-class dependencies** — Apollo Client, Yoga, Prisma, react-hook-form, and react-hot-toast are used directly
   instead of through `@redwoodjs/*` re-exports.
 
@@ -258,58 +260,80 @@ dbAuth survives the migration almost configuration-for-configuration via `@rwgql
    export default createValidatorDirective(schema, validate);
    ```
 
-## 6. Scaffold the web app (RedwoodSDK)
+## 6. Scaffold the web app (React Router)
 
-The web side is the biggest structural change: `App.tsx` + `@redwoodjs/vite` are replaced by a RedwoodSDK app that
-renders on a Cloudflare worker and hydrates on the client.
+The web side keeps Cedar's shape (`Routes.tsx`, `App.tsx`, pages, layouts, Cells) but runs on
+[React Router](https://reactrouter.com/start/framework/installation) framework mode: pages are server-rendered on a
+Cloudflare Worker and hydrate in the browser. The full app is [`test-apps/cedar/web/`](test-apps/cedar/web/).
 
-1. Create the RWSDK entry files (full versions in [`test-apps/rwsdk/web/src/`](test-apps/rwsdk/web/src/)):
-   - `document.tsx` — the HTML shell. This is where the app `<title>` and stylesheet links live now (there is no
-     `<Metadata>`).
-   - `client.tsx` — `initClient` + `initClientNavigation` from `rwsdk/client`.
-   - `worker.tsx` — replaces `App.tsx`. It decodes the dbAuth session cookie, compiles the route tree into worker
-     routes, and renders pages through Apollo's streaming SSR:
+1. Replace `@redwoodjs/vite` with React Router, the Cloudflare Vite plugin, and `rwgqlRoutes()` from
+   `@rwgql/router`, which compiles `src/Routes.tsx` into React Router route modules
+   ([`vite.config.mts`](test-apps/cedar/web/vite.config.mts)):
 
-     ```tsx
-     // test-apps/rwsdk/web/src/worker.tsx (condensed)
-     import { defineApp, type RequestInfo } from "rwsdk/worker";
-     import { createAuthDecoder } from "@rwgql/dbauth/decoder";
-     import { withWorkerCompile } from "@rwgql/router/worker";
+   ```ts
+   import { cloudflare } from "@cloudflare/vite-plugin";
+   import { reactRouter } from "@react-router/dev/vite";
+   import { rwgqlRoutes } from "@rwgql/router/vite";
+   import { defineConfig } from "vite-plus";
 
-     const authDecoder = createAuthDecoder({ cookieName, secret: import.meta.env.DB_AUTH_SECRET });
-
-     const sessionMiddleware = ({ ctx, request }: RequestInfo) => {
-       ctx.session = authDecoder(request);
-     };
-
-     const { workerRoutes } = withWorkerCompile({ ...appRoutes, routes }).compile({
-       isAuthenticated: ({ ctx }) => Boolean(ctx.session),
-       renderPage,
-     });
-
-     export default defineApp([setCommonHeaders(), sessionMiddleware, ...workerRoutes]);
-     ```
-
-2. Replace `RedwoodApolloProvider` with `@rwgql/rwsdk-apollo-client`. The provider chain in `App.tsx`
-   (`FatalErrorBoundary` → `RedwoodProvider` → `AuthProvider` → `RedwoodApolloProvider`) becomes a client component
-   with `AuthProvider` → `ApolloRwsdkProvider` (see [`test-apps/rwsdk/web/src/GraphQLProvider.tsx`](test-apps/rwsdk/web/src/GraphQLProvider.tsx)):
-
-   ```tsx
-   "use client";
-
-   import { ApolloRwsdkProvider, createRwsdkApolloMakeClient } from "@rwgql/rwsdk-apollo-client";
-
-   const makeClient = createRwsdkApolloMakeClient({ uri: graphQLUrl });
-
-   <AuthProvider>
-     <ApolloRwsdkProvider makeClient={makeClient} nonce={nonce} transportId={transportId}>
-       {children}
-     </ApolloRwsdkProvider>
-   </AuthProvider>;
+   export default defineConfig({
+     plugins: [rwgqlRoutes(), cloudflare({ viteEnvironment: { name: "ssr" } }), reactRouter()],
+   });
    ```
 
-   Full setup, including worker-side streaming, is documented in the
-   [`@rwgql/rwsdk-apollo-client` README](../packages/rwsdk-apollo-client/README.md).
+   and add [`react-router.config.ts`](test-apps/cedar/web/react-router.config.ts):
+
+   ```ts
+   export default {
+     // Generated from src/Routes.tsx (gitignored). Cedar's Routes.tsx and React Router's routes.ts
+     // would collide on case-insensitive filesystems, so the app directory is generated.
+     appDirectory: ".rwgql",
+     ssr: true,
+     future: { v8_middleware: true, v8_viteEnvironmentApi: true },
+   } satisfies Config;
+   ```
+
+2. Keep Cedar's entry files, adapted to server rendering:
+   - [`src/Document.tsx`](test-apps/cedar/web/src/Document.tsx) replaces `web/index.html` (the `<title>` and
+     stylesheets live here).
+   - [`src/App.tsx`](test-apps/cedar/web/src/App.tsx) keeps the provider chain. `FatalErrorBoundary` is not needed:
+     the generated root route renders `src/pages/FatalErrorPage` as its error boundary.
+   - [`src/apollo.ts`](test-apps/cedar/web/src/apollo.ts) replaces `RedwoodApolloProvider`. It builds the client with
+     [`@apollo/client-integration-react-router`](https://www.apollographql.com/docs/react/integrations/react-router)
+     and forwards the session cookie during SSR:
+
+     ```ts
+     import {
+       ApolloClient,
+       createApolloLoaderHandler,
+     } from "@apollo/client-integration-react-router";
+
+     export const makeClient = (request?: Request) =>
+       new ApolloClient({
+         cache: new InMemoryCache(),
+         link: new HttpLink({
+           credentials: "include",
+           headers: request ? { cookie: request.headers.get("cookie") ?? "" } : undefined,
+           uri: graphqlUrl,
+         }),
+       });
+
+     export const apolloLoader = createApolloLoaderHandler(makeClient);
+     ```
+
+   - [`src/entry.server.tsx`](test-apps/cedar/web/src/entry.server.tsx) and
+     [`src/entry.client.tsx`](test-apps/cedar/web/src/entry.client.tsx) wrap React Router in `ApolloProvider`
+     (streaming SSR on the server, hydration in the browser).
+   - [`workers/app.ts`](test-apps/cedar/web/workers/app.ts) is the Worker entry. It decodes the dbAuth session cookie
+     and tells the router who is logged in:
+
+     ```ts
+     import { routeAuthContext } from "@rwgql/router/server";
+
+     const context = new RouterContextProvider();
+     context.set(routeAuthContext, { isAuthenticated: Boolean(decodeSession(request)) });
+     return requestHandler(request, context);
+     ```
 
 3. Migrate the auth client. `web/src/auth.ts` changes two imports and nothing else conceptually:
 
@@ -324,90 +348,71 @@ renders on a Cloudflare worker and hydrates on the client.
      createAuth(dbAuthClient)                                 createAuthentication(client);
    ```
 
-4. Replace `@redwoodjs/vite` with the RWSDK + Cloudflare Vite plugins in the web app's config
-   ([`test-apps/rwsdk/web/vite.config.mts`](test-apps/rwsdk/web/vite.config.mts)):
-
-   ```ts
-   import { defineConfig } from "vite-plus";
-   import { redwood } from "rwsdk/vite";
-   import { cloudflare } from "@cloudflare/vite-plugin";
-
-   export default defineConfig({
-     plugins: [cloudflare({ viteEnvironment: { name: "worker" } }), redwood()],
-   });
-   ```
-
 ## 7. Migrate routes
 
-`Routes.tsx` keeps the exact same JSX vocabulary — `Router`, `Route`, `Private`, `Set`, `path="/posts/{id:Int}"`,
-`name`, `wrap` — but the imports change and two pieces of magic become explicit. Compare
-`web/src/Routes.tsx` with
-[`test-apps/rwsdk/web/src/Routes.tsx`](test-apps/rwsdk/web/src/Routes.tsx).
+`Routes.tsx` keeps Cedar's file and vocabulary — `Router`, `Route`, `Set`, `PrivateSet`/`Private`,
+`path="/posts/{id:Int}"`, `name`, `wrap`, `notfound` — and only the import changes. Compare `web/src/Routes.tsx`
+with [`test-apps/cedar/web/src/Routes.tsx`](test-apps/cedar/web/src/Routes.tsx).
 
-1. Import route primitives from `@rwgql/router/routes` and export the tree through `defineRoutes`:
+1. Import the route primitives from `@rwgql/router`:
 
    ```tsx
-   import { defineRoutes, Private, Route, Router, Set } from "@rwgql/router/routes";
+   import { Private, Route, Router, Set } from "@rwgql/router";
 
-   const routeTree = (
-     <Router>
+   const Routes = () => (
+     <Router useAuth={useAuth}>
        <Route path="/login" page={LoginPage} name="login" />
        <Set wrap={BlogLayout} cache>
          <Route path="/blog-post/{id:Int}" page={BlogPostPage} name="blogPost" />
+         <Private unauthenticated="login">
+           <Route path="/profile" page={ProfilePage} name="profile" />
+         </Private>
          <Route path="/" page={HomePage} name="home" />
          <Route notfound page={NotFoundPage} />
        </Set>
      </Router>
    );
 
-   export default defineRoutes(routeTree);
+   export default Routes;
    ```
 
-2. Import every page explicitly. Redwood auto-imports `src/pages/**` at build time; RedwoodGQL does not — add a
-   normal `import HomePage from "@/pages/HomePage/HomePage"` for each page (zero magic).
-3. Named routes (`routes.blogPost({ id: 1 })`) come from codegen instead of the router runtime. The
-   `generate-routes` task (from `createGenerateRoutesTasks()` in the web `vite.config`) writes
-   `src/routeDefinitions.gen.ts`, and a small module builds the typed helper
-   (see [`test-apps/rwsdk/web/src/routes.ts`](test-apps/rwsdk/web/src/routes.ts)):
+   The file is compiled statically and never rendered. Cedar's page auto-imports and `src/` directory-named imports
+   still work (Cedar's own test-project `Routes.tsx` compiles unchanged), but explicit imports type-check, so the
+   demo uses them.
 
-   ```ts
-   import { createNamedRoutes } from "@rwgql/router/routes";
-   import { routeDefinitions } from "@/routeDefinitions.gen";
-
-   export const routes = createNamedRoutes(routeDefinitions);
-   ```
-
-4. Replace `prerender` flags with `cache`. There is no SSG pass; public routes are rendered by the worker and cached
-   at the edge via `cache` on a `Route` or `Set` (headers come from `@rwgql/router` — see
-   [`packages/router/README.md`](../packages/router/README.md)).
+2. `routes`, `Link`, `NavLink`, `navigate`, `back`, `useParams`, `useMatch`, and `useBlocker` come from
+   `@rwgql/router`, as from `@redwoodjs/router`. `routes` is typed per app by the generated
+   `src/routeDefinitions.gen.ts`; there is no local `routes` module.
+3. Typed params (`{id:Int}`, `{x:Float}`, `{x:Boolean}`, `{slug:String}`, `{path...}`) reach the page as typed props.
+   A value that does not match its type responds 404.
+4. `<Private>` is enforced on the server: logged-out requests, including client-side navigations, are redirected to
+   the `unauthenticated` route with `?redirectTo=`.
+5. Replace `prerender` flags with `cache`. There is no SSG pass; public routes are server-rendered and cached at the
+   edge via `cache` on a `Route` or `Set` (see [`packages/router/README.md`](packages/router/README.md)).
 
 ## 8. Migrate pages, layouts, and components
 
-This step is a mechanical import swap across `src/pages/`, `src/layouts/`, and `src/components/`. Components that use
-hooks, browser APIs, or event handlers need a `"use client"` directive at the top (RWSDK renders server-first).
+This step is a mechanical import swap across `src/pages/`, `src/layouts/`, and `src/components/`.
 
 | RedwoodJS import                                                           | Replacement                                                                                                        |
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `import { useMutation } from '@redwoodjs/web'`                             | `import { useMutation } from "@apollo/client/react"`                                                               |
 | `import type { TypedDocumentNode } from '@redwoodjs/web'`                  | `@graphql-typed-document-node/core` (usually replaced by `graphql()` documents, step 9)                            |
 | `import { toast, Toaster } from '@redwoodjs/web/toast'`                    | `import { toast, Toaster } from "react-hot-toast"`                                                                 |
-| `import { Link, NavLink, navigate, useBlocker } from '@redwoodjs/router'`  | same names from `@rwgql/router`                                                                                    |
-| `import { routes } from '@redwoodjs/router'`                               | `import { routes } from "@/routes"` (step 7)                                                                       |
-| `import type { CellSuccessProps, CellFailureProps } from '@redwoodjs/web'` | `@rwgql/cell` (or app-local aliases, see [`test-apps/rwsdk/web/types/cell.ts`](test-apps/rwsdk/web/types/cell.ts)) |
+| `import { Link, NavLink, navigate, routes } from '@redwoodjs/router'`      | same names from `@rwgql/router`                                                                                    |
+| `import type { CellSuccessProps, CellFailureProps } from '@redwoodjs/web'` | `@rwgql/cell` (or app-local aliases, see [`test-apps/cedar/web/types/cell.ts`](test-apps/cedar/web/types/cell.ts)) |
 | `import { Form, TextField, ... } from '@redwoodjs/forms'`                  | app-local shim over react-hook-form (below)                                                                        |
-| `import { Metadata } from '@redwoodjs/web'`                                | delete — dropped for now                                                                                           |
+| `import { Metadata } from '@redwoodjs/web'`                                | delete — use React Router's `meta` export if you need per-page tags                                                |
 | global `gql` template tag                                                  | `graphql()` from `@/gql` (step 9)                                                                                  |
 
 ### Cells
 
 Cells keep their `QUERY` / `Loading` / `Empty` / `Failure` / `Success` exports, but the file wires itself up
 explicitly with `createCell` from `@rwgql/cell` instead of being transformed at build time. Compare
-`web/src/components/AuthorCell/AuthorCell.tsx`
-with [`test-apps/rwsdk/web/src/components/AuthorCell/AuthorCell.tsx`](test-apps/rwsdk/web/src/components/AuthorCell/AuthorCell.tsx):
+`web/src/components/AuthorCell/AuthorCell.tsx` with
+[`test-apps/cedar/web/src/components/AuthorCell/AuthorCell.tsx`](test-apps/cedar/web/src/components/AuthorCell/AuthorCell.tsx):
 
 ```tsx
-"use client";
-
 import { createCell } from "@rwgql/cell";
 import { graphql } from "@/gql";
 import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
@@ -439,15 +444,34 @@ export default createCell<ResultOf<typeof QUERY>, VariablesOf<typeof QUERY>>({
 });
 ```
 
-Cached public pages are also free to skip Cells entirely and fetch during worker SSR with `createServerGraphql` from
-`@rwgql/rwsdk-apollo-client/server` — that is what `test-apps/rwsdk/web`'s blog routes do.
+Cells fetch in the browser, like in Cedar, so the server-rendered HTML shows `Loading`. Add `suspense: true` to
+`createCell` to render the Cell's data on the server instead (the demo does this for
+[`PostsCell`](test-apps/cedar/web/src/components/Post/PostsCell/PostsCell.tsx)).
+
+Pages can also skip Cells and load their data in a route loader with Apollo's `preloadQuery`, which streams the
+result into the server-rendered HTML — that is what the demo's cached blog pages do
+([`HomePage`](test-apps/cedar/web/src/pages/HomePage/HomePage.tsx)):
+
+```tsx
+export { QueryErrorBoundary as ErrorBoundary } from "@/components/QueryError/QueryError";
+
+export const loader = apolloLoader<LoaderFunctionArgs>()(({ preloadQuery }) => ({
+  blogPostsRef: preloadQuery(BlogPostsQueryDocument),
+}));
+
+const HomePage = () => {
+  const { blogPostsRef } = useApolloLoaderData<typeof loader>();
+  const { data } = useReadQuery(blogPostsRef);
+  // ...
+};
+```
 
 ### Forms
 
 `@redwoodjs/forms` was a wrapper over react-hook-form. RedwoodGQL uses react-hook-form directly plus a small
 app-local shim that recreates the familiar components — copy
-[`test-apps/rwsdk/web/src/lib/forms.tsx`](test-apps/rwsdk/web/src/lib/forms.tsx) into your app. It provides `Form`, `Label`,
-`TextField`, `TextAreaField`, `NumberField`, `PasswordField`, `Submit`, `FieldError`, `FormError`, and the
+[`test-apps/cedar/web/src/lib/forms.tsx`](test-apps/cedar/web/src/lib/forms.tsx) into your app. It provides `Form`,
+`Label`, `TextField`, `TextAreaField`, `NumberField`, `PasswordField`, `Submit`, `FieldError`, `FormError`, and the
 `RWGqlError` type, so form JSX is unchanged:
 
 ```tsx
@@ -459,9 +483,8 @@ import {                                                    import {
 ```
 
 A fully migrated page combining all of the swaps (forms, `useMutation`, toast, `useBlocker`, typed documents) is
-[`test-apps/rwsdk/web/src/pages/ContactUsPage/ContactUsPage.tsx`](test-apps/rwsdk/web/src/pages/ContactUsPage/ContactUsPage.tsx); diff
-it against
-`web/src/pages/ContactUsPage/ContactUsPage.tsx`.
+[`test-apps/cedar/web/src/pages/ContactUsPage/ContactUsPage.tsx`](test-apps/cedar/web/src/pages/ContactUsPage/ContactUsPage.tsx);
+diff it against `web/src/pages/ContactUsPage/ContactUsPage.tsx`.
 
 ## 9. Web typegen
 
@@ -470,9 +493,8 @@ standard GraphQL Code Generator with the client preset:
 
 1. The GraphQL app exports its schema to `schema.graphql` (the `export-schema` task), and
    [`test-apps/graphql/codegen.ts`](test-apps/graphql/codegen.ts) generates:
-   - `test-apps/rwsdk/web/src/gql/` — the client preset output. Queries are written as `graphql(\`...\`)`calls and get typed
-document nodes automatically, replacing both the global`gql`tag and the`import type { ... } from
-     'types/graphql'` pairs.
+   - `test-apps/cedar/web/src/gql/` — the client preset output. Queries are written as `graphql(\`...\`)`calls and
+     get typed document nodes automatically, replacing both the global`gql`tag and the`import type { ... } from 'types/graphql'` pairs.
    - `types/graphql.d.ts` on the server — `QueryResolvers`, `MutationResolvers`, and relation resolver types via
      `createRedwoodResolverGenerateEntry()` from `@rwgql/graphql-typegen/codegen` (replaces `yarn rw g types`).
 2. Add [`@0no-co/graphqlsp`](https://github.com/0no-co/graphqlsp) as a TypeScript plugin for in-editor validation of
@@ -481,32 +503,31 @@ document nodes automatically, replacing both the global`gql`tag and the`import t
 
 ## 10. Migrate tests
 
-Jest and `@redwoodjs/testing` are replaced by Vitest through Vite+ (`vp test`), with different strategies per side.
+Jest and `@redwoodjs/testing` are replaced by Vitest through Vite+, with different strategies per side.
 
 ### Web tests
 
 - Test runner: Vitest browser mode with Playwright Chromium plus `@testing-library/react` — see the `test` block in
-  [`test-apps/rwsdk/web/vite.config.mts`](test-apps/rwsdk/web/vite.config.mts). `render` comes from `@testing-library/react` instead of
-  `@redwoodjs/testing/web`.
+  [`test-apps/cedar/web/vite.config.mts`](test-apps/cedar/web/vite.config.mts). Run them with `vp run test`, which
+  generates `src/gql` and the route definitions first.
 - Delete `.mock.ts` files and `.stories.tsx` files (`mockGraphQLQuery` and Storybook are dropped).
-- Cell and page tests stub `fetch` (or render the exported `Success`/`Empty`/`Failure` components directly) instead
-  of relying on Redwood's GraphQL mocking — see
-  [`test-apps/rwsdk/web/src/pages/HomePage/HomePage.test.tsx`](test-apps/rwsdk/web/src/pages/HomePage/HomePage.test.tsx):
+- Pages and layouts that use router hooks or loaders render through a small `renderRoute` helper built on React
+  Router's `createRoutesStub` ([`testUtils/renderRoute.tsx`](test-apps/cedar/web/testUtils/renderRoute.tsx)), and
+  GraphQL is stubbed at `fetch` — see
+  [`HomePage.test.tsx`](test-apps/cedar/web/src/pages/HomePage/HomePage.test.tsx):
 
   ```tsx
-  import { render, screen } from "@testing-library/react";
-  import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
+  vi.stubGlobal("fetch", vi.fn(graphqlResponse({ blogPosts: [post] })));
 
-  beforeEach(() => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => ({ ok: true, json: async () => ({ data: { blogPosts: [] } }) })),
-    );
-  });
+  renderRoute(HomePage, { loader });
+
+  expect(await screen.findByText("First post")).toBeInTheDocument();
   ```
 
 - Modules like `@/auth` that need a browser-safe stand-in are swapped with a Vite alias in test mode (see the
   `resolve.alias` block in the web `vite.config`).
+- End to end: `vp run e2e` runs the production Worker build against a mock API, and `vp run e2e:fullstack` runs
+  `vp dev` against the real API and database.
 
 ### API tests
 
@@ -547,7 +568,7 @@ Then verify:
 ```bash
 vp install        # install workspace dependencies
 vp check          # format, lint, type-check
-vp test           # unit + browser tests
+vp run -r test    # unit + browser tests (generates gql + routes first)
 vp run dev        # postgres + migrate + seed + web (8910) + graphql (8911)
 ```
 
@@ -556,31 +577,31 @@ auth), and the public blog pages.
 
 ## Appendix: package mapping reference
 
-| RedwoodJS package / export                                                                           | Replacement                                             | Kind      |
-| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | --------- |
-| `@redwoodjs/web` → `useMutation`                                                                     | `@apollo/client/react`                                  | npm       |
-| `@redwoodjs/web` → `TypedDocumentNode`                                                               | `@graphql-typed-document-node/core` / codegen documents | npm       |
-| `@redwoodjs/web` → Cells, `CellSuccessProps`, `CellFailureProps`                                     | `@rwgql/cell`                                           | rwgql     |
-| `@redwoodjs/web` → `Metadata`, `RedwoodProvider`                                                     | dropped (title in `document.tsx`)                       | dropped   |
-| `@redwoodjs/web` → `FatalErrorBoundary`, `DevFatalErrorPage`                                         | dropped                                                 | dropped   |
-| `@redwoodjs/web/toast`                                                                               | `react-hot-toast`                                       | npm       |
-| `@redwoodjs/web/apollo` → `RedwoodApolloProvider`                                                    | `@rwgql/rwsdk-apollo-client`                            | rwgql     |
-| `@redwoodjs/router` (Link, NavLink, navigate, useBlocker, Router, Route, Private, Set, named routes) | `@rwgql/router` + `/routes` + route codegen             | rwgql     |
-| `@redwoodjs/router` → `prerender`                                                                    | worker SSR + `cache` headers (`@rwgql/router`)          | rwgql     |
-| `@redwoodjs/forms`                                                                                   | react-hook-form + app-local `lib/forms.tsx` shim        | npm       |
-| `@redwoodjs/auth-dbauth-web`                                                                         | `@rwgql/dbauth/web` + `@rwgql/auth`                     | rwgql     |
-| `@redwoodjs/auth-dbauth-api`                                                                         | `@rwgql/dbauth/server` + `/decoder`                     | rwgql     |
-| `@redwoodjs/graphql-server` → `createGraphQLHandler`                                                 | Yoga + `node:http` + `@rwgql/graphql-typegen` registry  | rwgql     |
-| `@redwoodjs/graphql-server` → directives, errors                                                     | `@rwgql/auth/graphql`                                   | rwgql     |
-| `@redwoodjs/api` → `Decoded`, auth decoding                                                          | `@rwgql/dbauth/decoder`                                 | rwgql     |
-| `@redwoodjs/api/logger`                                                                              | Yoga plugin / console (optional `@rwgql/log-formatter`) | rwgql/npm |
-| `@redwoodjs/api/logger` → Prisma log helpers                                                         | dropped                                                 | dropped   |
-| `@redwoodjs/testing/web`                                                                             | Vitest browser mode + `@testing-library/react`          | npm       |
-| `@redwoodjs/testing/api` → scenarios                                                                 | fixtures + `@cedarjs/pg/vitest/template`                | npm       |
-| `@redwoodjs/testing/api` → `mockRedwoodDirective`                                                    | app-local `mockValidatorDirective` helper               | app code  |
-| `@redwoodjs/vite`                                                                                    | `rwsdk/vite` + `@cloudflare/vite-plugin` under Vite+    | npm       |
-| `@redwoodjs/core`, `project-config`, `eslint-config`                                                 | Vite+ (`vp check`, `vp test`, tasks)                    | Vite+     |
-| `yarn rw` CLI, `rw exec` scripts                                                                     | `vp` tasks + `tsx` scripts                              | Vite+     |
-| Redwood web typegen (`types/graphql`) + `graphql.config.js`                                          | graphql-codegen client preset + `@0no-co/graphqlsp`     | npm       |
-| Storybook + Cell mocks                                                                               | dropped                                                 | dropped   |
-| Generators / scaffolds                                                                               | dropped                                                 | dropped   |
+| RedwoodJS package / export                                                                           | Replacement                                                       | Kind      |
+| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | --------- |
+| `@redwoodjs/web` → `useMutation`                                                                     | `@apollo/client/react`                                            | npm       |
+| `@redwoodjs/web` → `TypedDocumentNode`                                                               | `@graphql-typed-document-node/core` / codegen documents           | npm       |
+| `@redwoodjs/web` → Cells, `CellSuccessProps`, `CellFailureProps`                                     | `@rwgql/cell`                                                     | rwgql     |
+| `@redwoodjs/web` → `Metadata`, `RedwoodProvider`                                                     | dropped (title in `Document.tsx`, React Router `meta`)            | dropped   |
+| `@redwoodjs/web` → `FatalErrorBoundary`, `DevFatalErrorPage`                                         | generated root `ErrorBoundary` renders `FatalErrorPage`           | rwgql     |
+| `@redwoodjs/web/toast`                                                                               | `react-hot-toast`                                                 | npm       |
+| `@redwoodjs/web/apollo` → `RedwoodApolloProvider`                                                    | `@apollo/client-integration-react-router` (`apollo.ts`)           | npm       |
+| `@redwoodjs/router` (Link, NavLink, navigate, useBlocker, Router, Route, Private, Set, named routes) | `@rwgql/router` (compiled to React Router)                        | rwgql     |
+| `@redwoodjs/router` → `prerender`                                                                    | worker SSR + `cache` headers (`@rwgql/router`)                    | rwgql     |
+| `@redwoodjs/forms`                                                                                   | react-hook-form + app-local `lib/forms.tsx` shim                  | npm       |
+| `@redwoodjs/auth-dbauth-web`                                                                         | `@rwgql/dbauth/web` + `@rwgql/auth`                               | rwgql     |
+| `@redwoodjs/auth-dbauth-api`                                                                         | `@rwgql/dbauth/server` + `/decoder`                               | rwgql     |
+| `@redwoodjs/graphql-server` → `createGraphQLHandler`                                                 | Yoga + `node:http` + `@rwgql/graphql-typegen` registry            | rwgql     |
+| `@redwoodjs/graphql-server` → directives, errors                                                     | `@rwgql/auth/graphql`                                             | rwgql     |
+| `@redwoodjs/api` → `Decoded`, auth decoding                                                          | `@rwgql/dbauth/decoder`                                           | rwgql     |
+| `@redwoodjs/api/logger`                                                                              | Yoga plugin / console (optional `@rwgql/log-formatter`)           | rwgql/npm |
+| `@redwoodjs/api/logger` → Prisma log helpers                                                         | dropped                                                           | dropped   |
+| `@redwoodjs/testing/web`                                                                             | Vitest browser mode + `@testing-library/react`                    | npm       |
+| `@redwoodjs/testing/api` → scenarios                                                                 | fixtures + `@cedarjs/pg/vitest/template`                          | npm       |
+| `@redwoodjs/testing/api` → `mockRedwoodDirective`                                                    | app-local `mockValidatorDirective` helper                         | app code  |
+| `@redwoodjs/vite`                                                                                    | `@react-router/dev` + `@cloudflare/vite-plugin` + `rwgqlRoutes()` | npm       |
+| `@redwoodjs/core`, `project-config`, `eslint-config`                                                 | Vite+ (`vp check`, `vp test`, tasks)                              | Vite+     |
+| `yarn rw` CLI, `rw exec` scripts                                                                     | `vp` tasks + `tsx` scripts                                        | Vite+     |
+| Redwood web typegen (`types/graphql`) + `graphql.config.js`                                          | graphql-codegen client preset + `@0no-co/graphqlsp`               | npm       |
+| Storybook + Cell mocks                                                                               | dropped                                                           | dropped   |
+| Generators / scaffolds                                                                               | dropped                                                           | dropped   |

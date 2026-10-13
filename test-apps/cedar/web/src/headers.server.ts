@@ -1,4 +1,4 @@
-// Security headers for every HTML/data response (ported from test-apps/rwsdk/web/src/headers.ts).
+// Security headers for every HTML/data response.
 const connectSrcOrigins = (): string => {
   const origins = new Set(["'self'"]);
 

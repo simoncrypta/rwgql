@@ -1,4 +1,4 @@
-# Cedar-shaped test app (React Router + Apollo, no RedwoodSDK)
+# Cedar-shaped test app (React Router + Apollo)
 
 This app is laid out like a [Cedar](https://github.com/cedarjs/cedar) project so it can show that a
 Cedar web side runs on RedwoodGQL with few changes. Its routes, pages, layouts, and Cells are ported from
@@ -22,7 +22,7 @@ Pages are served with SSR on a Cloudflare Worker, and `cache` routes are edge-ca
 
 ```bash
 cd test-apps/cedar/web
-vp run dev     # http://localhost:8920 (needs the GraphQL API on :8911: `vp run graphql#dev`)
+vp run dev     # http://localhost:8910 (needs the GraphQL API on :8911: `vp run graphql#dev`)
 vp test        # component tests (browser mode)
 vp run types   # react-router typegen + tsc
 vp run e2e     # production build on workerd against a mock API (no database needed)

@@ -2,8 +2,9 @@
 
 A proof of concept to carry forward the legacy of **RedwoodJS GraphQL Bighorn Epoch** — now **RedwoodGQL**.
 
-RedwoodGQL is a [Vite+](https://viteplus.dev/guide/) monorepo that pairs **RedwoodSDK** on the React front-end with an
-**Apollo Client** and a **GraphQL Yoga** server on **Node `http`**. The goal is a set of reusable packages that bring back
+RedwoodGQL is a [Vite+](https://viteplus.dev/guide/) monorepo that pairs a Cedar-compatible web side on
+**React Router** (framework mode, SSR on Cloudflare Workers) and **Apollo Client** with a **GraphQL Yoga** server on
+**Node `http`**. The goal is a set of reusable packages that bring back
 what people loved about Redwood — Cells, pluggable auth, a preconfigured GraphQL server, Prisma ORM — without the
 baggage that slowed RedwoodJS GraphQL down.
 
@@ -87,8 +88,7 @@ writing.
 ```text
 redwoodGQL/
 ├── test-apps/
-│   ├── rwsdk/web/    # RedwoodSDK React app with Apollo Client (legacy, retired in h16)
-│   ├── cedar/web/    # Cedar-shaped web app on React Router + Apollo
+│   ├── cedar/web/    # Cedar-shaped web app: React Router SSR + Apollo Client
 │   ├── graphql/      # GraphQL Yoga server (fetch handler + node:http)
 │   ├── db/           # Prisma schema, migrations, and database layer
 │   ├── domain/       # Business logic (planned; services live in graphql/ today)
@@ -97,7 +97,7 @@ redwoodGQL/
 │   ├── auth/         # @rwgql/auth — pluggable auth abstraction
 │   ├── dbauth/       # @rwgql/dbauth — self-hosted dbAuth provider
 │   ├── cell/         # @rwgql/cell — Redwood-style Cells for Apollo
-│   ├── rwsdk-apollo-client/ # Apollo integration for RedwoodSDK
+│   ├── router/       # @rwgql/router — Cedar Routes.tsx compiled to React Router
 │   ├── log-formatter/# @rwgql/log-formatter — GraphQL operation logging
 │   └── graphql-typegen/ # @rwgql/graphql-typegen — server resolver typegen + Yoga helpers
 └── scripts/          # Render build/start helpers and repo utilities
@@ -106,7 +106,7 @@ redwoodGQL/
 The data flow follows a familiar Redwood shape, rebuilt on modern primitives:
 
 ```text
-Browser (RedwoodSDK + Apollo Client)
+Browser (React Router + Apollo Client, SSR on a Worker)
         │
         ▼ GraphQL over HTTP
 GraphQL Yoga / node:http
@@ -123,14 +123,14 @@ future extraction layer.
 
 ## Packages
 
-| Package                      | Description                                                                             |
-| ---------------------------- | --------------------------------------------------------------------------------------- |
-| `@rwgql/auth`                | Pluggable auth — Yoga plugins, `requireAuth`/`skipAuth`                                 |
-| `@rwgql/dbauth`              | Self-hosted dbAuth for Fetch handlers / Yoga and RWSDK web                              |
-| `@rwgql/cell`                | `createCell` — query components with Loading/Empty/etc.                                 |
-| `@rwgql/rwsdk-apollo-client` | Apollo Client provider for RedwoodSDK ([setup](packages/rwsdk-apollo-client/README.md)) |
-| `@rwgql/log-formatter`       | Vite-style per-operation GraphQL logging                                                |
-| `@rwgql/graphql-typegen`     | Server resolver typegen from SDL + Yoga resolver wiring                                 |
+| Package                  | Description                                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `@rwgql/auth`            | Pluggable auth — Yoga plugins, `requireAuth`/`skipAuth`                                                |
+| `@rwgql/dbauth`          | Self-hosted dbAuth for Fetch handlers / Yoga and the web side                                          |
+| `@rwgql/cell`            | `createCell` — query components with Loading/Empty/etc. (opt-in `suspense` for SSR data)               |
+| `@rwgql/router`          | Cedar's `Routes.tsx`, `routes`, `Link`, `navigate` on React Router ([docs](packages/router/README.md)) |
+| `@rwgql/log-formatter`   | Vite-style per-operation GraphQL logging                                                               |
+| `@rwgql/graphql-typegen` | Server resolver typegen from SDL + Yoga resolver wiring                                                |
 
 ## Getting Started
 
@@ -196,24 +196,23 @@ may still change.
 
 - **Dev workflow** — `vp run dev` acquires Postgres (`@cedarjs/pg`/autopg), migrates, seeds, and runs web +
   GraphQL in parallel
-- **Web app** — RedwoodSDK + Apollo Client; scaffold pages (Posts, Contacts) use Cells; cached public
-  blog routes use server-side GraphQL via `createServerGraphql` (see `@rwgql/rwsdk-apollo-client`
-  README)
+- **Web app** — `test-apps/cedar/web`: Cedar's `Routes.tsx` compiled to React Router route modules, SSR on a
+  Cloudflare Worker, Apollo Client; scaffold pages (Posts, Contacts) use Cells; cached public blog routes preload
+  their queries in route loaders (Apollo `preloadQuery`)
 - **GraphQL API** — Yoga on Node `http` with SDL, resolvers, Prisma services, auth directives,
   and generated resolver types via `@rwgql/graphql-typegen`
 - **Auth** — `@rwgql/dbauth` (login, signup, logout, forgot/reset password), session cookies,
   web route guards, and `requireAuth`/`skipAuth` on the schema
 - **Data layer** — Prisma schema, migrations, and seed data in `test-apps/db`
-- **Tooling packages** — `@cedarjs/pg` (`0.2.0-alpha.0`), `@rwgql/log-formatter`,
+- **Tooling packages** — `@cedarjs/pg` (`0.3.0`), `@rwgql/log-formatter`,
   `@rwgql/graphql-typegen`
 
 ### Parity vs classic RedwoodJS (Cedar)
 
 Classic Cedar apps use Cells for blog pages (`BlogPostsCell`, `BlogPostCell`, etc.). In
-`test-apps/rwsdk/web`, **cached public blog routes** (`/`, `/blog-post/:id`, `/waterfall/:id`, `/about`, …)
-intentionally use **Worker SSR + `renderGraphqlPage`** with colocated queries and `@rwgql/router`
-`cache` headers — not client Cells. Auth and scaffold routes (Posts, Contacts) still use Cells. See
-`packages/router/README.md` for edge caching.
+`test-apps/cedar/web`, **cached public blog routes** (`/`, `/blog-post/:id`, `/waterfall/:id`, `/about`, …)
+preload their queries in **route loaders** and are server-rendered with `@rwgql/router` `cache` headers.
+Auth and scaffold routes (Posts, Contacts) use Cells. See `packages/router/README.md` for edge caching.
 
 Compared to a classic RedwoodJS GraphQL scaffold, remaining work is tracked on GitHub:
 
@@ -225,7 +224,7 @@ Compared to a classic RedwoodJS GraphQL scaffold, remaining work is tracked on G
 
 Coming from a classic RedwoodJS (Cedar) app? The step-by-step guide in
 [migrating-from-redwoodjs.md](migrating-from-redwoodjs.md) walks through replacing every `@redwoodjs/*`
-package with `@rwgql/*`, RedwoodSDK, and Vite+ — using a classic Cedar layout as the "before" and
+package with `@rwgql/*`, React Router, and Vite+ — using a classic Cedar layout as the "before" and
 `test-apps/` as the migrated reference for each step.
 
 ## Production deployment
@@ -235,7 +234,8 @@ env vars, Blueprint setup, and smoke tests.
 
 ## Further Reading
 
-- [RedwoodSDK Documentation](https://docs.rwsdk.com/)
+- [React Router (framework mode)](https://reactrouter.com/start/framework/installation)
+- [Apollo Client + React Router](https://www.apollographql.com/docs/react/integrations/react-router)
 - [Vite+ Documentation](https://viteplus.dev/guide/)
 - [GraphQL Yoga](https://the-guild.dev/graphql/yoga-server)
 - [Apollo Client](https://www.apollographql.com/docs/react/)

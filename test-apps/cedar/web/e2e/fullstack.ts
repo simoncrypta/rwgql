@@ -1,4 +1,4 @@
-// Real GraphQL API (:8911) + Postgres (@cedarjs/pg) + `vp dev` (:8920).
+// Real GraphQL API (:8911) + Postgres (@cedarjs/pg) + `vp dev` (:8910).
 // Usage: `vp run seed` from the repo root, then vp run e2e:fullstack (from test-apps/cedar/web).
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
@@ -9,7 +9,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright") as typeof import("playwright");
 
-const web = "http://localhost:8920";
+const web = "http://localhost:8910";
 const repoRoot = path.resolve(import.meta.dirname, "../../../..");
 
 const failures: string[] = [];
@@ -81,7 +81,7 @@ try {
   // graphql#dev rebuilds the workspace packages (vp pack clears dist/), so start the web dev
   // server only once the API is up.
   await waitFor("http://localhost:8911/graphql?query=%7B__typename%7D", "GraphQL API", api.log);
-  app = start(["pnpm", "exec", "vp", "dev", "--port", "8920", "--strictPort"], process.cwd());
+  app = start(["pnpm", "exec", "vp", "dev", "--port", "8910", "--strictPort"], process.cwd());
   await waitFor(`${web}/about`, "web dev server", app.log);
 
   const home = await fetch(`${web}/`);

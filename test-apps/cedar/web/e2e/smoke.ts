@@ -1,4 +1,4 @@
-// Production build on workerd (`vp preview`, :8920) against a mock API (:8911).
+// Production build on workerd (`vp preview`, :8910) against a mock API (:8911).
 // Usage: vp run e2e (from test-apps/cedar/web).
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -11,7 +11,7 @@ import { startMockApi } from "./mockApi.ts";
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright") as typeof import("playwright");
 
-const base = "http://localhost:8920";
+const base = "http://localhost:8910";
 const secret = "e2e-only-dbauth-secret";
 const cookieName = "session_8911";
 const sessionCookie = `${cookieName}=${encryptSession(createSessionPayload(1, 3600), secret)}`;
@@ -43,7 +43,7 @@ execFileSync("pnpm", ["exec", "vp", "build"], {
 
 const api = await startMockApi({ port: 8911, secret, cookieName });
 let apiClosed = false;
-const preview = spawn("pnpm", ["exec", "vp", "preview", "--port", "8920", "--strictPort"], {
+const preview = spawn("pnpm", ["exec", "vp", "preview", "--port", "8910", "--strictPort"], {
   // Own process group so workerd children are stopped too.
   detached: true,
   stdio: ["ignore", "pipe", "pipe"],

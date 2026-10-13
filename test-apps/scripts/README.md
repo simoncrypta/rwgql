@@ -21,7 +21,7 @@ Root [`vite.config.ts`](../../vite.config.ts) orchestrates workspace flows:
 - `bootstrap` — packs workspace tooling packages via `dependsOn` (`vp run bootstrap`; also runs automatically before `dev`
   and `ready`)
 - `dev` — depends on `bootstrap`, `db#prepare`, `seed`, and `graphql#codegen`; then runs
-  `rwsdk#dev` and `graphql#dev` in parallel via `vp run --parallel`. Each package handles its own shutdown on Ctrl+C
+  `cedar-web#dev` and `graphql#dev` in parallel via `vp run --parallel`. Each package handles its own shutdown on Ctrl+C
 - `seed` — runs `test-apps/scripts/seed.ts`; depends on `db#migrate-deploy`
 - `ready` — format, lint, type-check, tests, and build across the workspace (`vp run ready`)
 

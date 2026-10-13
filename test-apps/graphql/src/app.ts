@@ -4,9 +4,8 @@ import { db } from "db";
 import { dbAuthOptions } from "./auth/dbAuthConfig.ts";
 import { createGraphqlYoga } from "./graphql.ts";
 
-// Comma-separated CORS allowlist. Local default covers both web apps
-// (test-apps/rwsdk/web on :8910, test-apps/cedar/web on :8920).
-const webOrigins = (process.env.WEB_ORIGIN ?? "http://localhost:8910,http://localhost:8920")
+// Comma-separated CORS allowlist (local default: test-apps/cedar/web on :8910).
+const webOrigins = (process.env.WEB_ORIGIN ?? "http://localhost:8910")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);

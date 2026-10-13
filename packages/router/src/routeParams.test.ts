@@ -50,11 +50,8 @@ describe("parseRouteParams", () => {
     expect(parseRouteParams({ s: "String" }, {})).toBeUndefined();
   });
 
-  it("reads the glob by name or from the host splat key", () => {
+  it("reads the glob by name or from React Router's splat", () => {
     expect(parseRouteParams({ path: "Glob" }, { "*": "a/b" })).toEqual({ path: "a/b" });
-    expect(parseRouteParams({ path: "Glob" }, { $0: "a/b" }, { splatKey: "$0" })).toEqual({
-      path: "a/b",
-    });
     expect(parseRouteParams({ path: "Glob" }, { path: "c" })).toEqual({ path: "c" });
   });
 });

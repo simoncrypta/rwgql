@@ -10,8 +10,6 @@ export default defineConfig({
       "test-apps/graphql/types/graphql.d.ts",
       "test-apps/graphql/schema.graphql",
       "test-apps/graphql/src/**/*.gen.ts",
-      "test-apps/rwsdk/web/src/**/*.gen.ts",
-      "test-apps/rwsdk/web/src/gql/**",
       "test-apps/cedar/web/src/**/*.gen.ts",
       "test-apps/cedar/web/src/gql/**",
       "test-apps/cedar/web/.rwgql/**",
@@ -30,13 +28,7 @@ export default defineConfig({
   },
   test: {
     exclude: [...configDefaults.exclude],
-    projects: [
-      "packages/*",
-      "test-apps/db",
-      "test-apps/graphql",
-      "test-apps/rwsdk/web",
-      "test-apps/cedar/web",
-    ],
+    projects: ["packages/*", "test-apps/db", "test-apps/graphql", "test-apps/cedar/web"],
   },
   run: {
     cache: true,
@@ -60,7 +52,7 @@ export default defineConfig({
         cache: false,
       },
       dev: {
-        command: "vp run --parallel --filter rwsdk --filter graphql dev",
+        command: "vp run --parallel --filter cedar-web --filter graphql dev",
         dependsOn: ["bootstrap", "db#generate", "db#prepare", "seed", "graphql#codegen"],
         cache: false,
       },

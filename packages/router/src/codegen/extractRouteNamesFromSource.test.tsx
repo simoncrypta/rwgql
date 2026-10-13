@@ -4,70 +4,31 @@ import path from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 
 import { generateRouteDefinitionsFileContent } from "./generateRoutes.js";
-import {
-  extractRouteNamesFromSource,
-  routeNameEntriesFromTree,
-} from "./extractRouteNamesFromSource.js";
-import { routeNamesFromTree, Private, Route, Router, Set } from "../routeTree.js";
+import { extractRouteNamesFromSource } from "./extractRouteNamesFromSource.js";
 
-const HomePage = () => null;
-
+// Tests run from the package or the repo root (vitest projects).
 const findRoutesFile = () => {
-  const relativePath = path.join("test-apps", "rwsdk", "web", "src", "Routes.tsx");
+  const relativePath = path.join("test-apps", "cedar", "web", "src", "Routes.tsx");
   const candidates = [
     path.resolve(process.cwd(), relativePath),
     path.resolve(process.cwd(), "..", "..", relativePath),
   ];
-
-  for (const candidate of candidates) {
-    if (existsSync(candidate)) {
-      return candidate;
-    }
+  const found = candidates.find((candidate) => existsSync(candidate));
+  if (!found) {
+    throw new Error(`Could not find ${relativePath} from ${process.cwd()}`);
   }
-
-  throw new Error(`Could not find ${relativePath} from ${process.cwd()}`);
+  return found;
 };
 
 describe("extractRouteNamesFromSource", () => {
-  it("matches routeNamesFromTree for a Redwood-style route tree", () => {
-    const routeTree = (
-      <Router>
-        <Route path="/login" page={HomePage} name="login" />
-        <Set wrap={() => null} title="Contacts">
-          <Private unauthenticated="login">
-            <Route path="/contacts/{id:Int}" page={HomePage} name="contact" />
-          </Private>
-        </Set>
-        <Route path="/" page={HomePage} name="home" />
-        <Route notfound page={HomePage} />
-      </Router>
-    );
-
-    const source = `
-      const routeTree = (
-        <Router>
-          <Route path="/login" page={LoginPage} name="login" />
-          <Set wrap={ScaffoldLayout} title="Contacts">
-            <Private unauthenticated="login">
-              <Route path="/contacts/{id:Int}" page={ContactPage} name="contact" />
-            </Private>
-          </Set>
-          <Route path="/" page={HomePage} name="home" />
-          <Route notfound page={NotFoundPage} />
-        </Router>
-      );
-    `;
-
-    expect(extractRouteNamesFromSource(source)).toEqual(
-      routeNameEntriesFromTree(routeNamesFromTree(routeTree)),
-    );
-  });
-
-  it("matches routeNamesFromTree for test-apps/rwsdk/web Routes.tsx", () => {
+  it("lists the routes of test-apps/cedar/web Routes.tsx in declaration order", () => {
     const routesFile = findRoutesFile();
-    const source = readFileSync(routesFile, "utf8");
 
-    expect(extractRouteNamesFromSource(source, routesFile).map(({ name }) => name)).toEqual([
+    expect(
+      extractRouteNamesFromSource(readFileSync(routesFile, "utf8"), routesFile).map(
+        ({ name }) => name,
+      ),
+    ).toEqual([
       "double",
       "login",
       "signup",

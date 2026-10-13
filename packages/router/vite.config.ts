@@ -4,11 +4,8 @@ export default defineConfig({
   pack: {
     entry: [
       "src/index.ts",
-      "src/rwsdk.ts",
       "src/server.ts",
       "src/vite.ts",
-      "src/routes.ts",
-      "src/worker.ts",
       "src/codegen/index.ts",
       "src/tasks.ts",
       "src/cli/generate-routes.ts",

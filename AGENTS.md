@@ -1,5 +1,6 @@
 You can find doc for @redwoodjs/ packages online at https://cedarjs.com/docs/8.x/introduction You can find doc for
-RedwoodSDK (@rwsdk/ packages) online at https://docs.rwsdk.com/
+React Router (framework mode) online at https://reactrouter.com/ and for Apollo's React Router integration at
+https://www.apollographql.com/docs/react/integrations/react-router
 
 ## RedwoodGQL Direction
 
@@ -11,7 +12,7 @@ RedwoodJS (Cedar) app.
 - Treat `packages/` as the WIP "framework" / SDK surface. Each package should keep dependencies minimal, expose focused
   primitives, and work in isolation when its direct peer requirements are present.
 - Prefer package boundaries that let users adopt one block at a time. For example, `@rwgql/cell` should work with
-  Apollo Client, `@rwgql/rwsdk-apollo-client` should require only RedwoodSDK plus Apollo GraphQL pieces, and
+  Apollo Client, `@rwgql/router` should require only React Router (plus Babel for codegen), and
   `@cedarjs/pg` should work anywhere Vite Task / Vitest is available. App-local Prisma glue (prepare `.env`,
   migrate/generate tasks, Vitest migrate hook) lives in the db / graphql test apps — not a second Postgres layer.
 - Use [migrating-from-redwoodjs.md](migrating-from-redwoodjs.md) and GitHub parity issues for Cedar → RedwoodGQL

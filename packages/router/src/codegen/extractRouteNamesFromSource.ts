@@ -20,7 +20,3 @@ export const extractRouteNamesFromSource = (
   source: string,
   fileName = "Routes.tsx",
 ): RouteNameEntry[] => routeNameEntriesFromIR(parseRoutesSource(source, { fileName }));
-
-export const routeNameEntriesFromTree = (
-  entries: ReadonlyArray<RouteNameEntry>,
-): RouteNameEntry[] => entries.map(({ name, path, params }) => ({ name, path, params }));

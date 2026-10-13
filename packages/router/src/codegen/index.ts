@@ -1,7 +1,6 @@
 export {
   extractRouteNamesFromSource,
   routeNameEntriesFromIR,
-  routeNameEntriesFromTree,
 } from "./extractRouteNamesFromSource.js";
 export { emitReactRouterApp, readModuleExports } from "./emitReactRouter.js";
 export type { EmitReactRouterOptions } from "./emitReactRouter.js";

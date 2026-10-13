@@ -36,7 +36,6 @@ test-apps/db/.env
 test-apps/db/scripts/.env
 
 # GraphQL codegen
-test-apps/rwsdk/web/src/gql/
 test-apps/cedar/web/src/gql/
 
 # Beads / Dolt files (added by bd init)

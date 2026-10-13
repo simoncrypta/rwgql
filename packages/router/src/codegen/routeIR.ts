@@ -31,8 +31,6 @@ export type RouteEntry = {
   readonly page?: ModuleRef;
   readonly notfound: boolean;
   readonly redirect?: string;
-  /** RWSDK `render` prop (legacy only). */
-  readonly render?: true;
   readonly cacheControl?: string;
   readonly private: boolean;
   readonly unauthenticated?: string;

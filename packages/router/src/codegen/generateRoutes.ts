@@ -14,11 +14,6 @@ export type GenerateRoutesOptions = {
   readonly root: string;
   readonly routesFile?: string;
   readonly outputFile?: string;
-  /**
-   * Also emit a React Router framework-mode app directory (routes.ts, root.tsx, route modules).
-   * Defaults to true when the web root has a react-router.config.* file.
-   */
-  readonly reactRouter?: boolean;
   readonly appDir?: string;
 };
 
@@ -31,10 +26,7 @@ const formatParams = (params: RouteNameEntry["params"]): string => {
   return `{ ${entries.map(([name, type]) => `${name}: ${JSON.stringify(type)}`).join(", ")} }`;
 };
 
-export const generateRouteDefinitionsFileContent = (
-  routes: RouteNameEntry[],
-  { registerTypes = false }: { readonly registerTypes?: boolean } = {},
-): string => {
+export const generateRouteDefinitionsFileContent = (routes: RouteNameEntry[]): string => {
   const definitions = routes
     .map(
       (route) =>
@@ -42,29 +34,20 @@ export const generateRouteDefinitionsFileContent = (
     )
     .join("\n");
 
-  const registration = registerTypes
-    ? `
+  return `// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
+
+export const routeDefinitions = [
+${definitions}
+] as const;
+
 // Types \`routes\` from @rwgql/router for this app (Cedar's web-routes type augmentation).
 declare module "@rwgql/router" {
   interface RegisteredRoutes {
     definitions: typeof routeDefinitions;
   }
 }
-`
-    : "";
-
-  return `// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
-
-export const routeDefinitions = [
-${definitions}
-] as const;
-${registration}`;
+`;
 };
-
-const hasReactRouterConfig = (root: string) =>
-  ["ts", "mts", "js", "mjs"].some((extension) =>
-    existsSync(path.join(root, `react-router.config.${extension}`)),
-  );
 
 const writeIfChanged = (file: string, content: string) => {
   if (existsSync(file) && readFileSync(file, "utf8") === content) {
@@ -88,7 +71,6 @@ export const generateRoutes = ({
   root,
   routesFile = DEFAULT_ROUTES_FILE,
   outputFile = DEFAULT_ROUTE_DEFINITIONS_OUTPUT,
-  reactRouter = hasReactRouterConfig(root),
   appDir = DEFAULT_REACT_ROUTER_APP_DIR,
 }: GenerateRoutesOptions) => {
   const routesFilePath = path.resolve(root, routesFile);
@@ -101,30 +83,25 @@ export const generateRoutes = ({
     throw new Error(`No <Route> entries found in ${routesFilePath}`);
   }
 
-  writeIfChanged(
-    outputPath,
-    generateRouteDefinitionsFileContent(routes, { registerTypes: reactRouter }),
-  );
+  writeIfChanged(outputPath, generateRouteDefinitionsFileContent(routes));
 
-  if (reactRouter) {
-    const appDirPath = path.resolve(root, appDir);
-    const srcDir = path.dirname(routesFilePath);
-    const targets = resolveModules(ir, { routesFile: routesFilePath, srcDir });
-    const files = emitReactRouterApp(ir, targets, {
-      appDir: appDirPath,
-      definitionsFile: outputPath,
-      srcDir,
-    });
+  const appDirPath = path.resolve(root, appDir);
+  const srcDir = path.dirname(routesFilePath);
+  const targets = resolveModules(ir, { routesFile: routesFilePath, srcDir });
+  const files = emitReactRouterApp(ir, targets, {
+    appDir: appDirPath,
+    definitionsFile: outputPath,
+    srcDir,
+  });
 
-    for (const [relative, content] of files) {
-      writeIfChanged(path.join(appDirPath, relative), content);
-    }
+  for (const [relative, content] of files) {
+    writeIfChanged(path.join(appDirPath, relative), content);
+  }
 
-    // .rwgql is fully generated: drop modules of removed routes.
-    for (const relative of listFiles(appDirPath)) {
-      if (!files.has(relative)) {
-        rmSync(path.join(appDirPath, relative));
-      }
+  // .rwgql is fully generated: drop modules of removed routes.
+  for (const relative of listFiles(appDirPath)) {
+    if (!files.has(relative)) {
+      rmSync(path.join(appDirPath, relative));
     }
   }
 

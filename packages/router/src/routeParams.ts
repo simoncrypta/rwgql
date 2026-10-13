@@ -88,11 +88,6 @@ const parseParamValue = (type: ParamType, raw: string): boolean | number | strin
   }
 };
 
-export type ParseRouteParamsOptions = {
-  /** Key the host router uses for the trailing splat (`*` in React Router, `$0` in RWSDK). */
-  readonly splatKey?: string;
-};
-
 /**
  * Parse raw string params into Cedar-typed values. Returns `undefined` when a value does not
  * match its declared type (Cedar treats that as "route does not match").
@@ -100,12 +95,11 @@ export type ParseRouteParamsOptions = {
 export const parseRouteParams = <P extends ParamTypes>(
   types: P,
   raw: Readonly<Record<string, string | undefined>>,
-  { splatKey = "*" }: ParseRouteParamsOptions = {},
 ): ParsedParams<P> | undefined => {
   const parsed: Record<string, boolean | number | string> = {};
 
   for (const [name, type] of Object.entries(types)) {
-    const value = type === "Glob" ? (raw[name] ?? raw[splatKey]) : raw[name];
+    const value = type === "Glob" ? (raw[name] ?? raw["*"]) : raw[name];
     if (value === undefined) {
       return undefined;
     }

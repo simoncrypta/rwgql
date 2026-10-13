@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`generateRoutes (React Router) > emits a stable app directory (golden) 1`] = `
+exports[`generateRoutes > emits a stable app directory (golden) 1`] = `
 {
   "entry.client.tsx": "// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
 import "../src/entry.client";
@@ -155,7 +155,7 @@ export default function Set1() {
 }
 `;
 
-exports[`generateRoutes (React Router) > emits a stable app directory (golden) 2`] = `
+exports[`generateRoutes > emits a stable app directory (golden) 2`] = `
 "// Generated from src/Routes.tsx by @rwgql/router. Do not edit.
 
 export const routeDefinitions = [

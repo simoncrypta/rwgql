@@ -8,13 +8,9 @@ import { generateRoutes } from "./generateRoutes.js";
 
 const roots: string[] = [];
 
-const makeWebRoot = (files: Record<string, string>, { reactRouter = true } = {}) => {
+const makeWebRoot = (files: Record<string, string>) => {
   const root = mkdtempSync(path.join(tmpdir(), "rwgql-router-"));
   roots.push(root);
-
-  if (reactRouter) {
-    files = { "react-router.config.ts": "export default {};\n", ...files };
-  }
 
   for (const [relative, content] of Object.entries(files)) {
     const file = path.join(root, relative);
@@ -49,7 +45,7 @@ afterEach(() => {
   }
 });
 
-describe("generateRoutes (React Router)", () => {
+describe("generateRoutes", () => {
   it("compiles Cedar's test-project Routes.tsx unchanged", () => {
     const cedarRoutes = readFileSync(fixturePath("cedar-test-project/Routes.tsx.fixture"), "utf8");
     const pages = [
@@ -214,11 +210,6 @@ describe("generateRoutes (React Router)", () => {
       'references unknown route "nope"',
     ],
     [
-      "RWSDK render routes",
-      `<Router><Route path="/" render={() => null} name="home" /></Router>`,
-      "uses render, which is RWSDK-only",
-    ],
-    [
       "unresolvable pages",
       `<Router><Route path="/" page={MissingPage} name="home" /></Router>`,
       '"MissingPage" is not imported and is not a Cedar page under src/pages',
@@ -230,24 +221,5 @@ describe("generateRoutes (React Router)", () => {
     });
 
     expect(() => generateRoutes({ root })).toThrow(message);
-  });
-});
-
-describe("generateRoutes (legacy RWSDK)", () => {
-  it("only writes route definitions, without the @rwgql/router type registration", () => {
-    const root = makeWebRoot(
-      {
-        "src/Routes.tsx": `<Router>
-          <Route path="/" page={HomePage} name="home" />
-          <Route path="/reset" render={() => null} name="reset" />
-        </Router>`,
-      },
-      { reactRouter: false },
-    );
-
-    generateRoutes({ root });
-
-    expect(read(root, "src/routeDefinitions.gen.ts")).not.toContain("declare module");
-    expect(existsSync(path.join(root, ".rwgql"))).toBe(false);
   });
 });
