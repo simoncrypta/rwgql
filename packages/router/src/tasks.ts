@@ -31,8 +31,10 @@ export const createGenerateRoutesTasks = (
       : {
           command: "vp exec rwgql-router-generate-routes",
           dependsOn: [dependsOnBuild],
-          input: [routesFile],
-          output: [outputFile],
+          cache: {
+            input: [routesFile],
+            output: [outputFile],
+          },
         },
   };
 };

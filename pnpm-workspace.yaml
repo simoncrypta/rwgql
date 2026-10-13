@@ -11,10 +11,10 @@ catalog:
   "@types/node": ^24
   tsx: ^4.20.5
   typescript: 7.0.1-rc
-  vite: npm:@voidzero-dev/vite-plus-core@0.2.8
-  vitest: 4.1.9
-  "@vitest/browser-playwright": 4.1.9
-  vite-plus: 0.2.8
+  vite: npm:@voidzero-dev/vite-plus-core@1.1.0
+  vitest: 5.0.3
+  "@vitest/browser-playwright": 5.0.3
+  vite-plus: 1.1.0
   "@typescript/native-preview": 7.0.0-dev.20260707.2
 overrides:
   vite: "catalog:"

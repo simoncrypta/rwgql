@@ -21,6 +21,9 @@ export default defineConfig({
     alias: isTest
       ? {
           "@/auth": fileURLToPath(new URL("./testUtils/mockAuth.ts", import.meta.url)),
+          "virtual:use-client-lookup.js": fileURLToPath(
+            new URL("./testUtils/useClientLookup.ts", import.meta.url),
+          ),
         }
       : undefined,
     tsconfigPaths: isTest,

@@ -31,6 +31,16 @@ export default defineConfig({
       { find: /^@\//, replacement: `${fileURLToPath(new URL("./src", import.meta.url))}/` },
     ],
   },
+  // Discovered late on a cold `vp dev`, which forces a full reload on the first page view.
+  optimizeDeps: {
+    include: [
+      "@apollo/client",
+      "@apollo/client/react",
+      "@apollo/client-integration-react-router",
+      "react-hook-form",
+      "react-hot-toast",
+    ],
+  },
   fmt: {
     ignorePatterns: ["src/**/*.gen.ts", "src/gql/**", ".rwgql/**"],
   },

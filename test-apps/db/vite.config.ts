@@ -25,7 +25,9 @@ export default defineConfig({
       },
       generate: {
         command: "prisma generate",
-        input: ["prisma/schema.prisma"],
+        cache: {
+          input: ["prisma/schema.prisma"],
+        },
       },
       "migrate-deploy": {
         command: "prisma migrate deploy",

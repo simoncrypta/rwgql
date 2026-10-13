@@ -39,14 +39,14 @@ describe("createServerGraphql", () => {
     expect(data).toEqual({ posts: [{ id: 1 }] });
     expect(fetch).toHaveBeenCalledWith(
       "http://example.com/graphql",
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          cookie: "session=test",
-          "content-type": "application/json",
-        }),
-        method: "POST",
-      }),
+      expect.objectContaining({ method: "POST" }),
     );
+
+    // Vitest 5 compares Headers by own properties, so read the instance explicitly.
+    const [, init] = vi.mocked(fetch).mock.calls[0]!;
+    const headers = new Headers(init?.headers);
+    expect(headers.get("cookie")).toBe("session=test");
+    expect(headers.get("content-type")).toBe("application/json");
   });
 
   it("returns configured error UI from renderGraphqlPage", async () => {

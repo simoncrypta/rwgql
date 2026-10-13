@@ -17,7 +17,7 @@ export default defineConfig({
     // App fetch handler owns credentialed CORS (WEB_ORIGIN).
     cors: false,
   },
-  // cedarPgDev(): @cedarjs/pg status panel on listen, with `d` (status) / `s` (Prisma Studio).
+  // cedarPgDev(): @cedarjs/pg status panel (interactive terminals only).
   plugins: isTest ? [] : [fetchDevServer({ entry: "/src/app.ts" }), cedarPgDev()],
   test: {
     environment: "node",
@@ -77,43 +77,49 @@ export default defineConfig({
       codegen: {
         command: "graphql-codegen --config codegen.ts",
         dependsOn: ["export-schema", ...graphqlPackageBuilds],
-        input: [
-          "codegen.ts",
-          "schema.graphql",
-          { pattern: "test-apps/rwsdk/web/src/components/**/*.{ts,tsx}", base: "workspace" },
-          { pattern: "test-apps/rwsdk/web/src/pages/**/*.{ts,tsx}", base: "workspace" },
-          { pattern: "test-apps/cedar/web/src/components/**/*.{ts,tsx}", base: "workspace" },
-          { pattern: "test-apps/cedar/web/src/pages/**/*.{ts,tsx}", base: "workspace" },
-          { pattern: "packages/graphql-typegen/src/**/*.ts", base: "workspace" },
-        ],
-        output: [
-          { pattern: "test-apps/rwsdk/web/src/gql/**", base: "workspace" },
-          { pattern: "test-apps/cedar/web/src/gql/**", base: "workspace" },
-          "types/graphql.d.ts",
-        ],
+        cache: {
+          input: [
+            "codegen.ts",
+            "schema.graphql",
+            { pattern: "test-apps/rwsdk/web/src/components/**/*.{ts,tsx}", base: "workspace" },
+            { pattern: "test-apps/rwsdk/web/src/pages/**/*.{ts,tsx}", base: "workspace" },
+            { pattern: "test-apps/cedar/web/src/components/**/*.{ts,tsx}", base: "workspace" },
+            { pattern: "test-apps/cedar/web/src/pages/**/*.{ts,tsx}", base: "workspace" },
+            { pattern: "packages/graphql-typegen/src/**/*.ts", base: "workspace" },
+          ],
+          output: [
+            { pattern: "test-apps/rwsdk/web/src/gql/**", base: "workspace" },
+            { pattern: "test-apps/cedar/web/src/gql/**", base: "workspace" },
+            "types/graphql.d.ts",
+          ],
+        },
       },
       "export-schema": {
         command: "tsx scripts/export-schema.ts",
         dependsOn: ["regenerate-registry", ...graphqlPackageBuilds],
-        input: [
-          "scripts/export-schema.ts",
-          "src/graphql/**/*.ts",
-          "src/directives/**/*.ts",
-          "src/**/*.gen.ts",
-        ],
-        output: ["schema.graphql"],
+        cache: {
+          input: [
+            "scripts/export-schema.ts",
+            "src/graphql/**/*.ts",
+            "src/directives/**/*.ts",
+            "src/**/*.gen.ts",
+          ],
+          output: ["schema.graphql"],
+        },
       },
       "regenerate-registry": {
         // Gen files are in fmt.ignorePatterns; `vp fmt` on them fails even when named.
         command: "tsx scripts/regenerate-registry.ts",
         dependsOn: [...graphqlPackageBuilds],
-        input: [
-          "scripts/regenerate-registry.ts",
-          "src/graphql/**/*.ts",
-          "src/directives/**/*.ts",
-          "src/services/**/*.ts",
-        ],
-        output: ["src/typeDefs.gen.ts", "src/services.gen.ts", "src/getSchema.gen.ts"],
+        cache: {
+          input: [
+            "scripts/regenerate-registry.ts",
+            "src/graphql/**/*.ts",
+            "src/directives/**/*.ts",
+            "src/services/**/*.ts",
+          ],
+          output: ["src/typeDefs.gen.ts", "src/services.gen.ts", "src/getSchema.gen.ts"],
+        },
       },
     },
   },

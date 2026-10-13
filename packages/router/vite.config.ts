@@ -13,9 +13,7 @@ export default defineConfig({
       "src/tasks.ts",
       "src/cli/generate-routes.ts",
     ],
-    dts: {
-      tsgo: true,
-    },
+    dts: true,
   },
   test: {
     environment: "jsdom",

@@ -1,6 +1,5 @@
-// Full-stack e2e: real GraphQL API (test-apps/graphql, :8911) + Postgres (@cedarjs/pg) + this app
-// in `vp dev` (:8920). Run `vp run seed` from the repo root first (it acquires and seeds the DB).
-// Usage (from test-apps/cedar/web): pnpm exec tsx e2e/fullstack.ts
+// Real GraphQL API (:8911) + Postgres (@cedarjs/pg) + `vp dev` (:8920).
+// Usage: `vp run seed` from the repo root, then vp run e2e:fullstack (from test-apps/cedar/web).
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -44,6 +43,12 @@ const waitFor = async (url: string, label: string, logs: () => string) => {
   throw new Error(`${label} did not start:\n${logs().slice(-3000)}`);
 };
 
+// Interacting before React hydrates submits forms natively (full-page GET).
+const hydrated = (page: import("playwright").Page) =>
+  page
+    .waitForFunction(() => "__reactRouterRouteModules" in window)
+    .then(() => page.waitForLoadState("networkidle"));
+
 const stop = (child: ChildProcess) => {
   try {
     process.kill(-child.pid!, "SIGTERM");
@@ -72,7 +77,6 @@ try {
   app = start(["pnpm", "exec", "vp", "dev", "--port", "8920", "--strictPort"], process.cwd());
   await waitFor(`${web}/about`, "web dev server", app.log);
 
-  // --- SSR against the real API ---------------------------------------------------------------
   const home = await fetch(`${web}/`);
   check(
     "GET / SSR renders seeded posts from Postgres",
@@ -88,10 +92,10 @@ try {
   page.on("pageerror", (error) => consoleErrors.push(error.message));
   page.on("dialog", (dialog) => void dialog.accept());
 
-  // --- Login with redirectTo ------------------------------------------------------------------
   await page.goto(`${web}/posts`);
   await page.waitForURL(/\/login\?redirectTo=%2Fposts$/);
   check("anonymous /posts redirects to login", true);
+  await hydrated(page);
 
   await page.locator('input[name="username"]').fill("ada@example.com");
   await page.locator('input[name="password"]').fill("password");
@@ -101,7 +105,6 @@ try {
   await page.getByText("Migrating Redwood Cells").waitFor();
   check("PostsCell lists posts from the real API", true);
 
-  // --- Post CRUD --------------------------------------------------------------------------------
   const title = `E2E post ${Date.now()}`;
   await page.getByRole("link", { name: "New Post" }).click();
   await page.waitForURL(`${web}/posts/new`);
@@ -134,7 +137,6 @@ try {
   await page.getByRole("heading", { name: "Contacts" }).waitFor();
   check("private contacts page renders when logged in", page.url() === `${web}/contacts`);
 
-  // --- Logout -----------------------------------------------------------------------------------
   await page.goto(`${web}/`);
   await page.getByRole("link", { name: "Log Out" }).click();
   await page.getByRole("link", { name: "Log In" }).waitFor();
@@ -142,7 +144,6 @@ try {
   await page.waitForURL(/\/login\?redirectTo=%2Fposts$/);
   check("logout clears the session (private route redirects again)", true);
 
-  // --- Signup -----------------------------------------------------------------------------------
   const signupPage = await browser.newPage();
   const authResponses: string[] = [];
   signupPage.on("response", (response) => {
@@ -151,6 +152,7 @@ try {
     }
   });
   await signupPage.goto(`${web}/signup`);
+  await hydrated(signupPage);
   await signupPage.locator('input[name="username"]').fill(`e2e-${Date.now()}@example.com`);
   await signupPage.locator('input[name="password"]').fill("Correct-Horse-42"); // API policy: 12+ chars, 3 character classes
   await signupPage.locator('input[name="full-name"]').fill("E2E User");
