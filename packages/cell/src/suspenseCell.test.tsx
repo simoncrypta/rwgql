@@ -71,16 +71,21 @@ const cell = ({ withFailure = true } = {}) =>
 
 describe("createCell({ suspense: true })", () => {
   test("suspends with Loading, then renders Success with props as variables", async () => {
-    const PostsCell = cell();
-    const request = await renderWith(
-      { data: { posts: [{ __typename: "Post", id: 1 }] } },
-      <PostsCell limit={5} />,
-    );
+    vi.useFakeTimers();
+    try {
+      const PostsCell = cell();
+      const request = await renderWith(
+        { data: { posts: [{ __typename: "Post", id: 1 }] } },
+        <PostsCell limit={5} />,
+      );
 
-    screen.getByText("Loading posts");
-    await settle();
-    expect(screen.getByText("1 posts")).toBeInTheDocument();
-    expect(request).toHaveBeenCalledWith({ limit: 5 });
+      screen.getByText("Loading posts");
+      await act(() => vi.runAllTimersAsync());
+      expect(screen.getByText("1 posts")).toBeInTheDocument();
+      expect(request).toHaveBeenCalledWith({ limit: 5 });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test("renders Empty for empty results", async () => {
