@@ -223,3 +223,18 @@ describe("generateRoutes", () => {
     expect(() => generateRoutes({ root })).toThrow(message);
   });
 });
+
+it("forwards root middleware and loaders declared in src/root", () => {
+  const root = makeWebRoot({
+    "src/Routes.tsx":
+      'import { Router, Route } from "@rwgql/router"; export default () => <Router><Route path="/" page={HomePage} name="home" /></Router>;',
+    "src/pages/HomePage/HomePage.tsx": component,
+    "src/root.ts":
+      'export { middleware } from "./auth.server"; export const loader = () => null; export const helper = () => null; export default () => null;',
+  });
+  generateRoutes({ root });
+  expect(read(root, ".rwgql/root.tsx")).toContain(
+    'export { loader, middleware } from "../src/root";',
+  );
+  expect(read(root, ".rwgql/root.tsx")).not.toContain("export { helper");
+});

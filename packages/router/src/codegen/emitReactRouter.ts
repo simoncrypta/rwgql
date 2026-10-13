@@ -321,6 +321,21 @@ export const emitReactRouterApp = (
   const rootFile = path.join(appDir, "root.tsx");
   const appModule = resolveFile(path.join(srcDir, "App"));
   const documentModule = resolveFile(path.join(srcDir, "Document"));
+  const rootModule = resolveFile(path.join(srcDir, "root"));
+  const rootModuleExports = rootModule ? readExports(rootModule) : new globalThis.Set<string>();
+  const rootExports = [
+    "loader",
+    "action",
+    "middleware",
+    "clientMiddleware",
+    "clientLoader",
+    "clientAction",
+    "headers",
+    "handle",
+    "links",
+    "meta",
+    "shouldRevalidate",
+  ].filter((name) => rootModuleExports.has(name));
   const fatalErrorPage = findCedarPages(path.join(srcDir, "pages")).get("FatalErrorPage");
   const notFoundRoute = routes.find((route) => route.notfound && route.page);
   const notFoundTarget = notFoundRoute ? target(notFoundRoute.page!) : undefined;
@@ -332,6 +347,9 @@ export const emitReactRouterApp = (
     "",
     `import { routeDefinitions } from ${JSON.stringify(relativeSpecifier(rootFile, definitionsFile))};`,
     appModule && `import App from ${JSON.stringify(relativeSpecifier(rootFile, appModule))};`,
+    rootModule &&
+      rootExports.length > 0 &&
+      `export { ${rootExports.join(", ")} } from ${JSON.stringify(relativeSpecifier(rootFile, rootModule))};`,
     documentModule &&
       `import { Document } from ${JSON.stringify(relativeSpecifier(rootFile, documentModule))};`,
     fatalErrorPage &&

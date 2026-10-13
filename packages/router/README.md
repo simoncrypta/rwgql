@@ -70,6 +70,18 @@ import { routeAuthContext } from "@rwgql/router/server";
 context.set(routeAuthContext, { isAuthenticated: Boolean(session) });
 ```
 
+For the standard Node dev server or `@react-router/serve`, declare optional root route exports in
+`src/root.ts` (or `.tsx`). The generated root forwards `loader`, `action`, `middleware`, `clientMiddleware`,
+`clientLoader`, `clientAction`, `headers`, `handle`, `links`, `meta`, and `shouldRevalidate`:
+
+```ts
+// src/root.ts
+export { middleware } from "./auth.server";
+```
+
+The middleware can validate a forwarded cookie against an independent API and set `routeAuthContext`.
+Keep the app providers in `src/App.tsx`; the root route exports are compiled separately from its browser UI.
+
 Private Sets get `requireAuth` middleware, which responds with a 302 to the `unauthenticated` route
 and adds `?redirectTo=`. A server loader on each private Set makes client-side navigations
 round-trip, so the check also runs on client-side navigation.

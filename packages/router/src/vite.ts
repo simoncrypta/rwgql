@@ -46,7 +46,7 @@ export const rwgqlRoutes = (options: RwgqlRoutesPluginOptions = {}) => {
         file === path.join(srcDir, "Routes.tsx") ||
         file.startsWith(path.join(srcDir, "pages") + path.sep) ||
         file.startsWith(path.join(srcDir, "layouts") + path.sep) ||
-        /^(App|Document|entry\.(client|server))\.[jt]sx?$/.test(path.relative(srcDir, file));
+        /^(App|Document|root|entry\.(client|server))\.[jt]sx?$/.test(path.relative(srcDir, file));
 
       for (const event of ["add", "change", "unlink"] as const) {
         server.watcher.on(event, (file) => {
