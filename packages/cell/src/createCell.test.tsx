@@ -66,7 +66,8 @@ describe("createCell", () => {
     );
 
     expect(useQuery).toHaveBeenCalledWith(TEST_QUERY, {
-      fetchPolicy: "cache-first",
+      fetchPolicy: "cache-and-network",
+      notifyOnNetworkStatusChange: true,
       variables: { id: 7 },
     });
     screen.getByText("Hello Bob");
@@ -83,7 +84,8 @@ describe("createCell", () => {
     render(<TestCell variables={{ id: 9 }} />);
 
     expect(useQuery).toHaveBeenCalledWith(TEST_QUERY, {
-      fetchPolicy: "cache-first",
+      fetchPolicy: "cache-and-network",
+      notifyOnNetworkStatusChange: true,
       variables: { id: 9 },
     });
   });
@@ -132,7 +134,8 @@ describe("createCell", () => {
     render(<TestCell id={1} useOtherQuery />);
 
     expect(useQuery).toHaveBeenCalledWith(otherQuery, {
-      fetchPolicy: "cache-first",
+      fetchPolicy: "cache-and-network",
+      notifyOnNetworkStatusChange: true,
       variables: { id: 1, useOtherQuery: true },
     });
   });
