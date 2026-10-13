@@ -4,9 +4,6 @@
   "private": true,
   "description": "Cedar-shaped web side on React Router framework mode + Apollo (no RedwoodSDK)",
   "type": "module",
-  "scripts": {
-    "test": "vp test"
-  },
   "dependencies": {
     "@apollo/client": "^4.2.3",
     "@apollo/client-integration-react-router": "0.14.5-alpha.0",

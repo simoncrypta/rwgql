@@ -49,7 +49,8 @@ export default defineConfig({
   },
   plugins: lazyPlugins(() =>
     isTest
-      ? []
+      ? // Tests import the generated route definitions.
+        [rwgqlRoutes()]
       : [
           // Compiles src/Routes.tsx into .rwgql/ (React Router's appDirectory) and keeps it in sync.
           rwgqlRoutes(),
@@ -93,6 +94,12 @@ export default defineConfig({
       "e2e:fullstack": {
         command: "tsx e2e/fullstack.ts",
         dependsOn: [...webPackageBuilds, "generate-routes"],
+        cache: false,
+      },
+      // Tests import generated files (src/gql, src/routeDefinitions.gen.ts).
+      test: {
+        command: "vp test",
+        dependsOn: [...webPackageBuilds, "generate-routes", "graphql#codegen"],
         cache: false,
       },
       types: {

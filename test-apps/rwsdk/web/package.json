@@ -14,7 +14,6 @@
     "worker:run": "rw-scripts worker-run",
     "clean": "vp run clean:vite",
     "clean:vite": "rm -rf ./node_modules/.vite",
-    "test": "vp test",
     "release": "rw-scripts ensure-deploy-env && vp run clean && vp run build && wrangler deploy"
   },
   "dependencies": {

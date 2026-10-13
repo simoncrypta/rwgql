@@ -56,6 +56,12 @@ export default defineConfig({
   run: {
     tasks: {
       ...createGenerateRoutesTasks(),
+      // Tests import generated files (src/gql, src/routeDefinitions.gen.ts).
+      test: {
+        command: "vp test",
+        dependsOn: [...webPackageBuilds, "generate-routes", "graphql#codegen"],
+        cache: false,
+      },
       dev: {
         command: "vp dev --port 8910",
         dependsOn: [...webPackageBuilds, "generate-routes"],
