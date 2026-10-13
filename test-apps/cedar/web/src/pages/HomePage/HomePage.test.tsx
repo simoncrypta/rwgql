@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vite-plus/test";
 
 import { graphqlResponse, renderRoute } from "../../../testUtils/renderRoute";
 
-import HomePage, { loader } from "./HomePage";
+import HomePage, { ErrorBoundary, loader } from "./HomePage";
 
 const post = {
   __typename: "Post",
@@ -33,5 +33,18 @@ describe("HomePage", () => {
     renderRoute(HomePage, { loader });
 
     expect(await screen.findByText("Empty")).toBeInTheDocument();
+  });
+
+  it("shows the query failure in place when the API is unreachable", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new TypeError("Failed to fetch");
+      }),
+    );
+
+    renderRoute(HomePage, { loader, ErrorBoundary });
+
+    expect(await screen.findByText(/^Error:/)).toBeInTheDocument();
   });
 });

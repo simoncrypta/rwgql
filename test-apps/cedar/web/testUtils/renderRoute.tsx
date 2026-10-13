@@ -11,6 +11,7 @@ export type RenderRouteOptions = {
   /** URL to start at (default `path`). */
   readonly url?: string;
   readonly loader?: LoaderFunction;
+  readonly ErrorBoundary?: ComponentType;
 };
 
 /**
@@ -19,9 +20,9 @@ export type RenderRouteOptions = {
  */
 export const renderRoute = (
   Component: ComponentType,
-  { path = "/", url = path, loader }: RenderRouteOptions = {},
+  { path = "/", url = path, loader, ErrorBoundary }: RenderRouteOptions = {},
 ) => {
-  const Stub = createRoutesStub([{ path, Component, loader }]);
+  const Stub = createRoutesStub([{ path, Component, loader, ErrorBoundary }]);
 
   return render(
     <ApolloProvider client={makeClient()}>

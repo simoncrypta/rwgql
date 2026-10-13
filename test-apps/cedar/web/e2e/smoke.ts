@@ -42,6 +42,7 @@ execFileSync("pnpm", ["exec", "vp", "build"], {
 });
 
 const api = await startMockApi({ port: 8911, secret, cookieName });
+let apiClosed = false;
 const preview = spawn("pnpm", ["exec", "vp", "preview", "--port", "8920", "--strictPort"], {
   // Own process group so workerd children are stopped too.
   detached: true,
@@ -176,13 +177,25 @@ try {
 
   check("no browser console errors", consoleErrors.length === 0, consoleErrors.join("\n"));
   await browser.close();
+
+  // API outage: loader pages fail in place, inside their layout, and the 500 is not cached.
+  await api.close();
+  apiClosed = true;
+  const outage = await get("/");
+  const outageHtml = await outage.text();
+  check(
+    "API down → 500 with the error inside BlogLayout",
+    outage.status === 500 && outageHtml.includes("Redwood Blog") && outageHtml.includes("Error: "),
+    String(outage.status),
+  );
+  check("5xx is never edge-cached", outage.headers.get("cache-control") === "no-store");
 } catch (error) {
   console.error(`\npreview log:\n${previewLog.slice(-3000)}`);
   throw error;
 } finally {
   restoreDevVars();
   process.kill(-preview.pid!, "SIGTERM");
-  await api.close();
+  if (!apiClosed) await api.close();
 }
 
 if (failures.length > 0) {

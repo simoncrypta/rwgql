@@ -44,5 +44,9 @@ export default async function handleRequest(
   }
 
   responseHeaders.set("Content-Type", "text/html; charset=utf-8");
+  // Route `cache` headers must not let the edge keep serving an outage page.
+  if (responseStatusCode >= 500) {
+    responseHeaders.set("Cache-Control", "no-store");
+  }
   return new Response(body, { headers: responseHeaders, status: responseStatusCode });
 }

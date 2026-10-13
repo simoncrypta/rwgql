@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 
 import { apolloLoader, useApolloLoaderData } from "@/apollo";
 import BlogArticle, { BlogArticlePostFragment } from "@/components/BlogArticle/BlogArticle";
+export { QueryErrorBoundary as ErrorBoundary } from "@/components/QueryError/QueryError";
 import { getFragmentData, graphql } from "@/gql";
 
 const FindWaterfallBlogPostQueryDocument = graphql(`
