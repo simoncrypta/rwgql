@@ -1,6 +1,8 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    // The workspace root has no @types/node; adding one re-splits vitest's peer variants.
+    "typeRoots": ["../db/node_modules/@types"],
     "types": ["node"]
   },
   "include": ["."]
