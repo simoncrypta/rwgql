@@ -9,7 +9,7 @@ export const createAuthDecoder = ({
 }) => {
   const resolvedSecret = resolveDbAuthSecret({ secret });
 
-  return (request: Request): { id: number } | null => {
+  return (request: Request): { id: string | number } | null => {
     const cookieValue = parseCookieHeader(request.headers.get("cookie"), cookieName);
 
     if (!cookieValue) {

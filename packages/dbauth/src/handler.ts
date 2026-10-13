@@ -67,7 +67,7 @@ const getModel = (options: DbAuthHandlerOptions) => {
   return model;
 };
 
-const setSessionCookie = (options: DbAuthHandlerOptions, userId: number) => {
+const setSessionCookie = (options: DbAuthHandlerOptions, userId: string | number) => {
   const secret = resolveDbAuthSecret({ secret: options.secret });
   const maxAge = options.login?.expires ?? defaultSessionExpires;
   const value = encryptSession(createSessionPayload(userId, maxAge), secret);
@@ -127,7 +127,7 @@ const login = async (request: Request, options: DbAuthHandlerOptions) => {
   }
 
   const loggedInUser = (await options.login?.handler?.(user)) ?? user;
-  const userId = Number(loggedInUser[authFields.id]);
+  const userId = loggedInUser[authFields.id] as string | number;
 
   return Response.json(sanitizeUser(loggedInUser, options.allowedUserFields), {
     headers: {
@@ -211,7 +211,7 @@ const signup = async (request: Request, options: DbAuthHandlerOptions) => {
       userAttributes,
       username,
     });
-    const userId = Number(createdUser[authFields.id]);
+    const userId = createdUser[authFields.id] as string | number;
 
     return Response.json(sanitizeUser(createdUser, options.allowedUserFields), {
       headers: {
@@ -344,7 +344,10 @@ const resetPassword = async (request: Request, options: DbAuthHandlerOptions) =>
   const headers: Record<string, string> = {};
 
   if (shouldLogin) {
-    headers["Set-Cookie"] = setSessionCookie(options, Number(updatedUser[authFields.id]));
+    headers["Set-Cookie"] = setSessionCookie(
+      options,
+      updatedUser[authFields.id] as string | number,
+    );
   }
 
   return Response.json(sanitizeUser(updatedUser, options.allowedUserFields), { headers });

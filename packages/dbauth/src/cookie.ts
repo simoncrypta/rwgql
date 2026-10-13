@@ -12,7 +12,7 @@ export type ResolveDbAuthSecretOptions = {
 
 export type SessionPayload = {
   readonly exp: number;
-  readonly id: number;
+  readonly id: string | number;
   readonly iat: number;
 };
 
@@ -36,7 +36,7 @@ export const resolveDbAuthSecret = ({
 };
 
 export const createSessionPayload = (
-  id: number,
+  id: string | number,
   expiresInSeconds: number,
   now = Date.now(),
 ): SessionPayload => {
@@ -78,7 +78,10 @@ export const decryptSession = (
     const currentTime = Math.floor(now / 1000);
 
     if (
-      typeof payload.id !== "number" ||
+      !(
+        (typeof payload.id === "number" && Number.isFinite(payload.id)) ||
+        (typeof payload.id === "string" && payload.id.length > 0)
+      ) ||
       typeof payload.iat !== "number" ||
       typeof payload.exp !== "number" ||
       payload.exp <= currentTime

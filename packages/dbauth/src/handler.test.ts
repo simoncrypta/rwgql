@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { createSessionPayload, encryptSession } from "./cookie.js";
+import { createSessionPayload, decryptSession, encryptSession } from "./cookie.js";
 import { handleDbAuthRequest } from "./handler.js";
 import { hashPassword } from "./password.js";
 import type { DbAuthHandlerOptions } from "./types.js";
@@ -279,5 +279,37 @@ describe("handleDbAuthRequest", () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: "Must choose a new password" });
+  });
+});
+
+describe("string user IDs", () => {
+  it("keeps UUIDs through login, session decoding and getToken", async () => {
+    const id = "09a3cc26-4390-45d9-a9f0-fc8f6a2fc734";
+    const { hashedPassword, salt } = hashPassword("password");
+    const user = { id, email: "uuid@example.com", hashedPassword, salt };
+    const options = createOptions();
+    options.db.user.findUnique = async ({ where }) =>
+      where.email === user.email || where.id === id ? user : null;
+    const response = await handleDbAuthRequest(
+      new Request("http://localhost/auth?method=login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ username: user.email, password: "password" }),
+      }),
+      options,
+    );
+    expect(response.status).toBe(200);
+    const cookie = response.headers.get("set-cookie")!.split(";", 1)[0];
+    const token = await handleDbAuthRequest(
+      new Request("http://localhost/auth?method=getToken", { method: "POST", headers: { cookie } }),
+      options,
+    );
+    expect(await token.json()).toMatchObject({ id, email: user.email });
+  });
+  it("rejects empty and invalid session IDs", () => {
+    for (const id of ["", NaN, Infinity]) {
+      const value = encryptSession(createSessionPayload(id, 60), "test-secret");
+      expect(decryptSession(value, "test-secret")).toBeNull();
+    }
   });
 });
