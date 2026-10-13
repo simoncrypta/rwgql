@@ -87,7 +87,8 @@ writing.
 ```text
 redwoodGQL/
 ├── test-apps/
-│   ├── web/          # RedwoodSDK React app with Apollo Client
+│   ├── rwsdk/web/    # RedwoodSDK React app with Apollo Client (legacy, retired in h16)
+│   ├── cedar/web/    # Cedar-shaped web app on React Router + Apollo
 │   ├── graphql/      # GraphQL Yoga server (fetch handler + node:http)
 │   ├── db/           # Prisma schema, migrations, and database layer
 │   ├── domain/       # Business logic (planned; services live in graphql/ today)
@@ -209,7 +210,7 @@ may still change.
 ### Parity vs classic RedwoodJS (Cedar)
 
 Classic Cedar apps use Cells for blog pages (`BlogPostsCell`, `BlogPostCell`, etc.). In
-`test-apps/web`, **cached public blog routes** (`/`, `/blog-post/:id`, `/waterfall/:id`, `/about`, …)
+`test-apps/rwsdk/web`, **cached public blog routes** (`/`, `/blog-post/:id`, `/waterfall/:id`, `/about`, …)
 intentionally use **Worker SSR + `renderGraphqlPage`** with colocated queries and `@rwgql/router`
 `cache` headers — not client Cells. Auth and scaffold routes (Posts, Contacts) still use Cells. See
 `packages/router/README.md` for edge caching.

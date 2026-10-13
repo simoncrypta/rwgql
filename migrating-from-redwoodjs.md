@@ -17,9 +17,9 @@ packages, each independently runnable:
 ```text
 RedwoodJS (Cedar)                RedwoodGQL
 ─────────────────                ──────────
-web/                             test-apps/web/      RedwoodSDK app (Cloudflare worker SSR + client) with Apollo Client
-api/  (functions, graphql,      test-apps/graphql/  GraphQL Yoga on node:http, SDL + services + directives
-       services, directives)    test-apps/db/       Prisma schema, migrations, client — its own package
+web/                             test-apps/rwsdk/web/  RedwoodSDK app (Cloudflare worker SSR + client) with Apollo Client
+api/  (functions, graphql,      test-apps/graphql/    GraphQL Yoga on node:http, SDL + services + directives
+       services, directives)    test-apps/db/         Prisma schema, migrations, client — its own package
 api/db/ (Prisma)
 ```
 
@@ -263,7 +263,7 @@ dbAuth survives the migration almost configuration-for-configuration via `@rwgql
 The web side is the biggest structural change: `App.tsx` + `@redwoodjs/vite` are replaced by a RedwoodSDK app that
 renders on a Cloudflare worker and hydrates on the client.
 
-1. Create the RWSDK entry files (full versions in [`test-apps/web/src/`](test-apps/web/src/)):
+1. Create the RWSDK entry files (full versions in [`test-apps/rwsdk/web/src/`](test-apps/rwsdk/web/src/)):
    - `document.tsx` — the HTML shell. This is where the app `<title>` and stylesheet links live now (there is no
      `<Metadata>`).
    - `client.tsx` — `initClient` + `initClientNavigation` from `rwsdk/client`.
@@ -271,7 +271,7 @@ renders on a Cloudflare worker and hydrates on the client.
      routes, and renders pages through Apollo's streaming SSR:
 
      ```tsx
-     // test-apps/web/src/worker.tsx (condensed)
+     // test-apps/rwsdk/web/src/worker.tsx (condensed)
      import { defineApp, type RequestInfo } from "rwsdk/worker";
      import { createAuthDecoder } from "@rwgql/dbauth/decoder";
      import { withWorkerCompile } from "@rwgql/router/worker";
@@ -292,7 +292,7 @@ renders on a Cloudflare worker and hydrates on the client.
 
 2. Replace `RedwoodApolloProvider` with `@rwgql/rwsdk-apollo-client`. The provider chain in `App.tsx`
    (`FatalErrorBoundary` → `RedwoodProvider` → `AuthProvider` → `RedwoodApolloProvider`) becomes a client component
-   with `AuthProvider` → `ApolloRwsdkProvider` (see [`test-apps/web/src/GraphQLProvider.tsx`](test-apps/web/src/GraphQLProvider.tsx)):
+   with `AuthProvider` → `ApolloRwsdkProvider` (see [`test-apps/rwsdk/web/src/GraphQLProvider.tsx`](test-apps/rwsdk/web/src/GraphQLProvider.tsx)):
 
    ```tsx
    "use client";
@@ -325,7 +325,7 @@ renders on a Cloudflare worker and hydrates on the client.
    ```
 
 4. Replace `@redwoodjs/vite` with the RWSDK + Cloudflare Vite plugins in the web app's config
-   ([`test-apps/web/vite.config.mts`](test-apps/web/vite.config.mts)):
+   ([`test-apps/rwsdk/web/vite.config.mts`](test-apps/rwsdk/web/vite.config.mts)):
 
    ```ts
    import { defineConfig } from "vite-plus";
@@ -342,7 +342,7 @@ renders on a Cloudflare worker and hydrates on the client.
 `Routes.tsx` keeps the exact same JSX vocabulary — `Router`, `Route`, `Private`, `Set`, `path="/posts/{id:Int}"`,
 `name`, `wrap` — but the imports change and two pieces of magic become explicit. Compare
 `web/src/Routes.tsx` with
-[`test-apps/web/src/Routes.tsx`](test-apps/web/src/Routes.tsx).
+[`test-apps/rwsdk/web/src/Routes.tsx`](test-apps/rwsdk/web/src/Routes.tsx).
 
 1. Import route primitives from `@rwgql/router/routes` and export the tree through `defineRoutes`:
 
@@ -368,7 +368,7 @@ renders on a Cloudflare worker and hydrates on the client.
 3. Named routes (`routes.blogPost({ id: 1 })`) come from codegen instead of the router runtime. The
    `generate-routes` task (from `createGenerateRoutesTasks()` in the web `vite.config`) writes
    `src/routeDefinitions.gen.ts`, and a small module builds the typed helper
-   (see [`test-apps/web/src/routes.ts`](test-apps/web/src/routes.ts)):
+   (see [`test-apps/rwsdk/web/src/routes.ts`](test-apps/rwsdk/web/src/routes.ts)):
 
    ```ts
    import { createNamedRoutes } from "@rwgql/router/routes";
@@ -386,24 +386,24 @@ renders on a Cloudflare worker and hydrates on the client.
 This step is a mechanical import swap across `src/pages/`, `src/layouts/`, and `src/components/`. Components that use
 hooks, browser APIs, or event handlers need a `"use client"` directive at the top (RWSDK renders server-first).
 
-| RedwoodJS import                                                           | Replacement                                                                                            |
-| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `import { useMutation } from '@redwoodjs/web'`                             | `import { useMutation } from "@apollo/client/react"`                                                   |
-| `import type { TypedDocumentNode } from '@redwoodjs/web'`                  | `@graphql-typed-document-node/core` (usually replaced by `graphql()` documents, step 9)                |
-| `import { toast, Toaster } from '@redwoodjs/web/toast'`                    | `import { toast, Toaster } from "react-hot-toast"`                                                     |
-| `import { Link, NavLink, navigate, useBlocker } from '@redwoodjs/router'`  | same names from `@rwgql/router`                                                                        |
-| `import { routes } from '@redwoodjs/router'`                               | `import { routes } from "@/routes"` (step 7)                                                           |
-| `import type { CellSuccessProps, CellFailureProps } from '@redwoodjs/web'` | `@rwgql/cell` (or app-local aliases, see [`test-apps/web/types/cell.ts`](test-apps/web/types/cell.ts)) |
-| `import { Form, TextField, ... } from '@redwoodjs/forms'`                  | app-local shim over react-hook-form (below)                                                            |
-| `import { Metadata } from '@redwoodjs/web'`                                | delete — dropped for now                                                                               |
-| global `gql` template tag                                                  | `graphql()` from `@/gql` (step 9)                                                                      |
+| RedwoodJS import                                                           | Replacement                                                                                                        |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `import { useMutation } from '@redwoodjs/web'`                             | `import { useMutation } from "@apollo/client/react"`                                                               |
+| `import type { TypedDocumentNode } from '@redwoodjs/web'`                  | `@graphql-typed-document-node/core` (usually replaced by `graphql()` documents, step 9)                            |
+| `import { toast, Toaster } from '@redwoodjs/web/toast'`                    | `import { toast, Toaster } from "react-hot-toast"`                                                                 |
+| `import { Link, NavLink, navigate, useBlocker } from '@redwoodjs/router'`  | same names from `@rwgql/router`                                                                                    |
+| `import { routes } from '@redwoodjs/router'`                               | `import { routes } from "@/routes"` (step 7)                                                                       |
+| `import type { CellSuccessProps, CellFailureProps } from '@redwoodjs/web'` | `@rwgql/cell` (or app-local aliases, see [`test-apps/rwsdk/web/types/cell.ts`](test-apps/rwsdk/web/types/cell.ts)) |
+| `import { Form, TextField, ... } from '@redwoodjs/forms'`                  | app-local shim over react-hook-form (below)                                                                        |
+| `import { Metadata } from '@redwoodjs/web'`                                | delete — dropped for now                                                                                           |
+| global `gql` template tag                                                  | `graphql()` from `@/gql` (step 9)                                                                                  |
 
 ### Cells
 
 Cells keep their `QUERY` / `Loading` / `Empty` / `Failure` / `Success` exports, but the file wires itself up
 explicitly with `createCell` from `@rwgql/cell` instead of being transformed at build time. Compare
 `web/src/components/AuthorCell/AuthorCell.tsx`
-with [`test-apps/web/src/components/AuthorCell/AuthorCell.tsx`](test-apps/web/src/components/AuthorCell/AuthorCell.tsx):
+with [`test-apps/rwsdk/web/src/components/AuthorCell/AuthorCell.tsx`](test-apps/rwsdk/web/src/components/AuthorCell/AuthorCell.tsx):
 
 ```tsx
 "use client";
@@ -440,13 +440,13 @@ export default createCell<ResultOf<typeof QUERY>, VariablesOf<typeof QUERY>>({
 ```
 
 Cached public pages are also free to skip Cells entirely and fetch during worker SSR with `createServerGraphql` from
-`@rwgql/rwsdk-apollo-client/server` — that is what `test-apps/web`'s blog routes do.
+`@rwgql/rwsdk-apollo-client/server` — that is what `test-apps/rwsdk/web`'s blog routes do.
 
 ### Forms
 
 `@redwoodjs/forms` was a wrapper over react-hook-form. RedwoodGQL uses react-hook-form directly plus a small
 app-local shim that recreates the familiar components — copy
-[`test-apps/web/src/lib/forms.tsx`](test-apps/web/src/lib/forms.tsx) into your app. It provides `Form`, `Label`,
+[`test-apps/rwsdk/web/src/lib/forms.tsx`](test-apps/rwsdk/web/src/lib/forms.tsx) into your app. It provides `Form`, `Label`,
 `TextField`, `TextAreaField`, `NumberField`, `PasswordField`, `Submit`, `FieldError`, `FormError`, and the
 `RWGqlError` type, so form JSX is unchanged:
 
@@ -459,7 +459,7 @@ import {                                                    import {
 ```
 
 A fully migrated page combining all of the swaps (forms, `useMutation`, toast, `useBlocker`, typed documents) is
-[`test-apps/web/src/pages/ContactUsPage/ContactUsPage.tsx`](test-apps/web/src/pages/ContactUsPage/ContactUsPage.tsx); diff
+[`test-apps/rwsdk/web/src/pages/ContactUsPage/ContactUsPage.tsx`](test-apps/rwsdk/web/src/pages/ContactUsPage/ContactUsPage.tsx); diff
 it against
 `web/src/pages/ContactUsPage/ContactUsPage.tsx`.
 
@@ -470,7 +470,7 @@ standard GraphQL Code Generator with the client preset:
 
 1. The GraphQL app exports its schema to `schema.graphql` (the `export-schema` task), and
    [`test-apps/graphql/codegen.ts`](test-apps/graphql/codegen.ts) generates:
-   - `test-apps/web/src/gql/` — the client preset output. Queries are written as `graphql(\`...\`)`calls and get typed
+   - `test-apps/rwsdk/web/src/gql/` — the client preset output. Queries are written as `graphql(\`...\`)`calls and get typed
 document nodes automatically, replacing both the global`gql`tag and the`import type { ... } from
      'types/graphql'` pairs.
    - `types/graphql.d.ts` on the server — `QueryResolvers`, `MutationResolvers`, and relation resolver types via
@@ -486,12 +486,12 @@ Jest and `@redwoodjs/testing` are replaced by Vitest through Vite+ (`vp test`), 
 ### Web tests
 
 - Test runner: Vitest browser mode with Playwright Chromium plus `@testing-library/react` — see the `test` block in
-  [`test-apps/web/vite.config.mts`](test-apps/web/vite.config.mts). `render` comes from `@testing-library/react` instead of
+  [`test-apps/rwsdk/web/vite.config.mts`](test-apps/rwsdk/web/vite.config.mts). `render` comes from `@testing-library/react` instead of
   `@redwoodjs/testing/web`.
 - Delete `.mock.ts` files and `.stories.tsx` files (`mockGraphQLQuery` and Storybook are dropped).
 - Cell and page tests stub `fetch` (or render the exported `Success`/`Empty`/`Failure` components directly) instead
   of relying on Redwood's GraphQL mocking — see
-  [`test-apps/web/src/pages/HomePage/HomePage.test.tsx`](test-apps/web/src/pages/HomePage/HomePage.test.tsx):
+  [`test-apps/rwsdk/web/src/pages/HomePage/HomePage.test.tsx`](test-apps/rwsdk/web/src/pages/HomePage/HomePage.test.tsx):
 
   ```tsx
   import { render, screen } from "@testing-library/react";

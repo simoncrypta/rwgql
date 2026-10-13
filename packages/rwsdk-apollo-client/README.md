@@ -1,6 +1,6 @@
 # @rwgql/rwsdk-apollo-client
 
-Apollo Client + RWSDK SSR streaming. Demo wiring: `test-apps/web/src/worker.tsx`, `test-apps/web/src/GraphQLProvider.tsx`.
+Apollo Client + RWSDK SSR streaming. Demo wiring: `test-apps/rwsdk/web/src/worker.tsx`, `test-apps/rwsdk/web/src/GraphQLProvider.tsx`.
 
 ## Cedar imports
 
@@ -30,7 +30,7 @@ For public routes that fetch on the Worker during SSR (instead of client Cells),
 client once in your app:
 
 ```tsx
-// test-apps/web/src/graphql.server.ts
+// test-apps/rwsdk/web/src/graphql.server.ts
 import { createServerGraphql } from "@rwgql/rwsdk-apollo-client/server";
 
 export const resolveGraphqlUrl = () =>
